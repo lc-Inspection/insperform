@@ -2064,17 +2064,43 @@ async function pushConfigToSheets() {
   } catch(e) { console.warn('Config push hatası:', e.message); }
 }
 
+// ─── JSONP YARDIMCISI ───
+// GitHub Pages → Google Apps Script GET isteklerinde CORS engeli var.
+// JSONP ile script tag üzerinden veri çekiyoruz.
+function jsonpFetch(url, params) {
+  return new Promise((resolve, reject) => {
+    const cbName = '_lcwCb_' + Date.now() + '_' + Math.floor(Math.random() * 1e6);
+    const timeout = setTimeout(() => {
+      delete window[cbName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+      reject(new Error('JSONP zaman aşımı (10 sn)'));
+    }, 10000);
+
+    window[cbName] = function(data) {
+      clearTimeout(timeout);
+      delete window[cbName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+      resolve(data);
+    };
+
+    const allParams = new URLSearchParams({ ...params, callback: cbName });
+    const script = document.createElement('script');
+    script.src = url + '?' + allParams.toString();
+    script.onerror = () => {
+      clearTimeout(timeout);
+      delete window[cbName];
+      reject(new Error('Script yüklenemedi — URL doğru mu?'));
+    };
+    document.head.appendChild(script);
+  });
+}
+
 async function pullConfigFromSheets() {
   const url = appConfig.sheetsWebAppUrl;
   const token = appConfig.sheetsApiToken;
   if (!url || !token) return false;
   try {
-    const params = new URLSearchParams({ action: 'getConfig', token });
-    const res = await fetch(url + '?' + params, { method: 'GET', redirect: 'follow' });
-    if (!res.ok) return false;
-    const text = await res.text();
-    if (text.trim().startsWith('<')) return false;
-    const data = JSON.parse(text);
+    const data = await jsonpFetch(url, { action: 'getConfig', token });
     if (data.status === 'ok' && data.config && data.config.password) {
       appConfig.password = data.config.password;
       localStorage.setItem(APP_CONFIG_KEY, JSON.stringify(appConfig));
@@ -2103,26 +2129,19 @@ async function autoFetchOnStartup() {
     console.log('🔄 İlk açılış: Sheets\'ten klasmanlar otomatik çekiliyor...');
     showStartupBanner('📥 Sheets\'ten veriler çekiliyor...');
     try {
-      const params = new URLSearchParams({ action: 'getKlasmanlar', token });
-      const res = await fetch(url + '?' + params, { method: 'GET', redirect: 'follow' });
-      if (res.ok) {
-        const text = await res.text();
-        if (!text.trim().startsWith('<')) {
-          const data = JSON.parse(text);
-          if (data.status === 'ok' && Array.isArray(data.klasmanlar) && data.klasmanlar.length > 0) {
-            klasmanlar = data.klasmanlar;
-            nextId = Math.max(1, ...klasmanlar.map(k => k.id || 0)) + 1;
-            saveData();
-            renderListe();
-            renderEditor();
-            updateSidebar();
-            showStartupBanner(`✅ ${klasmanlar.length} klasman Sheets'ten otomatik yüklendi!`, 'success');
-            console.log('✅ Otomatik yükleme tamamlandı:', klasmanlar.length, 'klasman');
-          } else {
-            hideStartupBanner();
-          }
-        } else { hideStartupBanner(); }
-      } else { hideStartupBanner(); }
+      const data = await jsonpFetch(url, { action: 'getKlasmanlar', token });
+      if (data.status === 'ok' && Array.isArray(data.klasmanlar) && data.klasmanlar.length > 0) {
+        klasmanlar = data.klasmanlar;
+        nextId = Math.max(1, ...klasmanlar.map(k => k.id || 0)) + 1;
+        saveData();
+        renderListe();
+        renderEditor();
+        updateSidebar();
+        showStartupBanner(`✅ ${klasmanlar.length} klasman Sheets'ten otomatik yüklendi!`, 'success');
+        console.log('✅ Otomatik yükleme tamamlandı:', klasmanlar.length, 'klasman');
+      } else {
+        hideStartupBanner();
+      }
     } catch(e) {
       console.warn('Otomatik çekme hatası:', e.message);
       hideStartupBanner();
@@ -2260,19 +2279,11 @@ async function checkPassword() {
   let sheetsPassword = null;
   if (urlOk) {
     try {
-      const params = new URLSearchParams({ action: 'getConfig', token: appConfig.sheetsApiToken });
-      const res = await fetch(appConfig.sheetsWebAppUrl + '?' + params, { method: 'GET', redirect: 'follow' });
-      if (res.ok) {
-        const text = await res.text();
-        if (!text.trim().startsWith('<')) {
-          const data = JSON.parse(text);
-          if (data.status === 'ok' && data.config && data.config.password) {
-            sheetsPassword = data.config.password;
-            // Yerel config'i güncelle
-            appConfig.password = sheetsPassword;
-            localStorage.setItem(APP_CONFIG_KEY, JSON.stringify(appConfig));
-          }
-        }
+      const data = await jsonpFetch(appConfig.sheetsWebAppUrl, { action: 'getConfig', token: appConfig.sheetsApiToken });
+      if (data.status === 'ok' && data.config && data.config.password) {
+        sheetsPassword = data.config.password;
+        appConfig.password = sheetsPassword;
+        localStorage.setItem(APP_CONFIG_KEY, JSON.stringify(appConfig));
       }
     } catch(e) { /* sessizce devam */ }
   }
@@ -2307,16 +2318,7 @@ async function _firstRunSync() {
   showStartupBanner('📥 Sheets\'ten klasmanlar çekiliyor...');
 
   try {
-    // pullFromSheets ile TAM AYNI yöntem
-    const params = new URLSearchParams({ action: 'getKlasmanlar', token });
-    const response = await fetch(url + '?' + params.toString(), {
-      method: 'GET',
-      redirect: 'follow'
-    });
-    if (!response.ok) throw new Error('HTTP ' + response.status);
-    const text = await response.text();
-    if (text.trim().startsWith('<')) throw new Error('Apps Script HTML hata döndürdü');
-    const data = JSON.parse(text);
+    const data = await jsonpFetch(url, { action: 'getKlasmanlar', token });
     if (data.status === 'error') throw new Error(data.message || 'Sunucu hata döndürdü');
 
     if (data.status === 'ok' && Array.isArray(data.klasmanlar) && data.klasmanlar.length > 0) {
@@ -2409,31 +2411,11 @@ async function pullFromSheets() {
   const origText = btn?.textContent || '';
   if (btn) { btn.textContent = '⏳ Çekiliyor...'; btn.disabled = true; }
 
-  // Google Apps Script GET isteklerinde redirect yapıyor.
-  // fetch ile mode:'follow' + no-cors birlikte çalışmaz.
-  // En güvenilir yöntem: fetch no-redirect ile değil,
-  // doğrudan redirect'i takip eden normal fetch — Apps Script
-  // aslında CORS header'ı dönderir (redirect sonrası).
+  // JSONP ile veri çek (GitHub Pages CORS sorunu için)
   async function gsFetch(action, extraParams) {
-    const params = new URLSearchParams({
-      action,
-      token,
-      ...(extraParams || {})
-    });
-    // Apps Script Web App URL'sine GET — redirect'i takip et
-    const response = await fetch(url + '?' + params.toString(), {
-      method: 'GET',
-      redirect: 'follow'
-    });
-    if (!response.ok) {
-      throw new Error('Sunucu yanıtı: HTTP ' + response.status + '. URL ve token doğru mu?');
-    }
-    const text = await response.text();
-    // Bazen Apps Script HTML hata sayfası döner
-    if (text.trim().startsWith('<')) {
-      throw new Error('Sunucu HTML döndürdü — Apps Script hata vermiş olabilir.\nURL doğru mu? Yeni dağıtım yapıldı mı?');
-    }
-    return JSON.parse(text);
+    const params = { action, token, ...(extraParams || {}) };
+    const data = await jsonpFetch(url, params);
+    return data;
   }
 
   try {
