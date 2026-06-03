@@ -2031,7 +2031,7 @@ let animationEffect = 'slide'; // slide, fade, zoom, flip
 // APP CONFIG (Tüm Ayarlar)
 // ────────────────────────────
 const APP_CONFIG_KEY = 'lc_inspection_config';
-const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbylHwcu3q2CnNwmNUQIyjkuhyAcapnxabPmAGrKW70GU-IVWhq_55KHwk2NBQ3pGhaOgQ/exec';
+const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwdM7izL7cwHzYNIAG_N0wZ1_NpKM_AyBp0wrpgRtnoLHa_WnMh-JQZfeRJhdq6BPzg7Q/exec';
 const DEFAULT_API_TOKEN  = 'lcw-secret-2024';
 let appConfig = {
   password: 'lcw2024',
@@ -2218,9 +2218,12 @@ function loadConfig() {
       appConfig = { ...appConfig, ...cfg };
     }
   } catch(e) {}
-  // Varsayılan URL/token boşsa hardcode değerleri kullan
-  if (!appConfig.sheetsWebAppUrl) appConfig.sheetsWebAppUrl = DEFAULT_SHEETS_URL;
-  if (!appConfig.sheetsApiToken)  appConfig.sheetsApiToken  = DEFAULT_API_TOKEN;
+  // Eski dağıtım URL'i varsa yenisiyle değiştir
+  const OLD_URL = 'https://script.google.com/macros/s/AKfycbylHwcu3q2CnNwmNUQIyjkuhyAcapnxabPmAGrKW70GU-IVWhq_55KHwk2NBQ3pGhaOgQ/exec';
+  if (!appConfig.sheetsWebAppUrl || appConfig.sheetsWebAppUrl === OLD_URL) {
+    appConfig.sheetsWebAppUrl = DEFAULT_SHEETS_URL;
+  }
+  if (!appConfig.sheetsApiToken) appConfig.sheetsApiToken = DEFAULT_API_TOKEN;
   // UI'ya yansıt
   const wuEl = document.getElementById('sheets-webapp-url');
   const vuEl = document.getElementById('sheets-view-url');
