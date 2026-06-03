@@ -2031,7 +2031,7 @@ let animationEffect = 'slide'; // slide, fade, zoom, flip
 // APP CONFIG (Tüm Ayarlar)
 // ────────────────────────────
 const APP_CONFIG_KEY = 'lc_inspection_config';
-const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbzXFslNKDL3LlWEQPi8suFqSw5iqm65r2-KamgptTK1tXUY6Fpl25C8ok5zhoUGW1bSAg/exec';
+const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbxAwsRPMbkkMF61E-L_XRsbME4-HoVbPOpBW1FQFj_DslOAh31UxOnbWBEHRwZeWBvRyQ/exec';
 const DEFAULT_API_TOKEN  = 'lcw-secret-2024';
 let appConfig = {
   password: 'lcw2024',
@@ -2197,14 +2197,14 @@ function loadConfig() {
       appConfig = { ...appConfig, ...cfg };
     }
   } catch(e) {}
-  // Eski dağıtım URL'lerini yenisiyle değiştir (v5.1 migration)
+  // URL her zaman sabit kalır — localStorage'daki eski değer görmezden gelinir (v5.2)
   const OLD_URLS = [
     'https://script.google.com/macros/s/AKfycbylHwcu3q2CnNwmNUQIyjkuhyAcapnxabPmAGrKW70GU-IVWhq_55KHwk2NBQ3pGhaOgQ/exec',
-    'https://script.google.com/macros/s/AKfycbwdM7izL7cwHzYNIAG_N0wZ1_NpKM_AyBp0wrpgRtnoLHa_WnMh-JQZfeRJhdq6BPzg7Q/exec'
+    'https://script.google.com/macros/s/AKfycbwdM7izL7cwHzYNIAG_N0wZ1_NpKM_AyBp0wrpgRtnoLHa_WnMh-JQZfeRJhdq6BPzg7Q/exec',
+    'https://script.google.com/macros/s/AKfycbzXFslNKDL3LlWEQPi8suFqSw5iqm65r2-KamgptTK1tXUY6Fpl25C8ok5zhoUGW1bSAg/exec'
   ];
-  if (!appConfig.sheetsWebAppUrl || OLD_URLS.includes(appConfig.sheetsWebAppUrl)) {
-    appConfig.sheetsWebAppUrl = DEFAULT_SHEETS_URL;
-  }
+  // Her zaman HTML içindeki sabit URL kullan (farklı bilgisayarda da değişmez)
+  appConfig.sheetsWebAppUrl = DEFAULT_SHEETS_URL;
   if (!appConfig.sheetsApiToken) appConfig.sheetsApiToken = DEFAULT_API_TOKEN;
   // UI'ya yansıt
   const wuEl = document.getElementById('sheets-webapp-url');
@@ -2217,7 +2217,8 @@ function loadConfig() {
 }
 
 function saveConfig() {
-  appConfig.sheetsWebAppUrl  = document.getElementById('sheets-webapp-url')?.value?.trim() || '';
+  // sheetsWebAppUrl her zaman HTML'e gömülü sabit değeri kullanır (v5.2)
+  appConfig.sheetsWebAppUrl  = DEFAULT_SHEETS_URL;
   appConfig.sheetsViewUrl    = document.getElementById('sheets-view-url')?.value?.trim()   || '';
   appConfig.sheetsApiToken   = document.getElementById('sheets-api-token')?.value?.trim()  || '';
   localStorage.setItem(APP_CONFIG_KEY, JSON.stringify(appConfig));
