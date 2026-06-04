@@ -1372,25 +1372,33 @@ label { font-size: 12px; font-weight: 500; color: var(--muted); display: block; 
 </head>
 <body>
 
-<!-- SAVE SUCCESS NOTIFICATION -->
-<div class="save-success" id="save-notification">
-  ✅ Veriler başarıyla kaydedildi!
-</div>
-
 <!-- PASSWORD MODAL -->
 <div class="pw-overlay" id="pw-overlay" style="display:none">
   <div class="pw-box">
     <div class="pw-icon" id="pw-icon">🔐</div>
-    <div class="pw-title" id="pw-title">Klasman Yönetimi</div>
-    <div class="pw-sub" id="pw-sub">Bu bölüme erişmek için şifre gereklidir</div>
+    <div class="pw-title" id="pw-title">Giriş Yap</div>
+    <div class="pw-sub" id="pw-sub">Şifrenizi girerek devam edin</div>
     <input type="password" class="pw-input" id="pw-input" placeholder="••••••" onkeydown="if(event.key==='Enter')checkPassword()">
     <div class="pw-err" id="pw-err"></div>
     <button class="pw-btn" onclick="checkPassword()">🔓 Giriş Yap</button>
+    <div style="margin-top:10px;font-size:11px;color:var(--muted2);display:flex;align-items:center;justify-content:center;gap:6px" id="pw-server-status">
+      <span style="width:7px;height:7px;border-radius:50%;background:var(--muted2);display:inline-block" id="pw-dot"></span>
+      <span id="pw-server-label">Sunucu doğrulaması aktif</span>
+    </div>
     <div style="margin-top:12px" id="pw-cancel-row">
       <button onclick="closePwModal()" style="background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer">İptal</button>
     </div>
   </div>
 </div>
+
+<!-- APP SHELL — initially hidden until login -->
+<div id="app-shell" style="display:none">
+
+<!-- SAVE SUCCESS NOTIFICATION -->
+<div class="save-success" id="save-notification">
+  ✅ Veriler başarıyla kaydedildi!
+</div>
+
 
 <!-- TOPBAR -->
 <header class="topbar">
@@ -1463,11 +1471,11 @@ label { font-size: 12px; font-weight: 500; color: var(--muted); display: block; 
           <p>Tüm inspectörlerin performans durumunu tek ekranda izleyin</p>
         </div>
         <div class="ph-buttons">
+          <button class="btn" onclick="pullPerformansFromSheets()" id="dash-pull-btn" title="Sheets'ten performans verisini çek">
+            📥 Sheets'ten Çek
+          </button>
           <button class="btn btn-warning" onclick="clearDashboardData()">
             🗑️ Temizle
-          </button>
-          <button class="btn btn-success" onclick="saveDashboardData()">
-            💾 Kaydet
           </button>
           <button class="btn btn-primary" onclick="exportToExcel()">
             📊 Excel'e Aktar
@@ -1980,6 +1988,8 @@ label { font-size: 12px; font-weight: 500; color: var(--muted); display: block; 
   </div>
 </div>
 
+</div><!-- /app-shell -->
+
 <script>
 // ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // GLOBAL DEĞİŞKENLER VE SABITLER
@@ -2092,7 +2102,7 @@ function jsonpFetch(url, params) {
         '2. Apps Script kodu v5.1 ile güncellendi ve YENİ dağıtım yapıldı mı?\n' +
         '3. Paneldeki URL doğru mu?'
       ));
-    }, 12000);
+    }, 20000);
 
     function handler(event) {
       // Sadece Apps Script kaynaklarından gelen mesajları kabul et
@@ -2139,33 +2149,44 @@ async function autoFetchOnStartup() {
     klasmanlar.every((k,i) => ['Pantolon','Ceket','Mont'][i] === k.ad);
   const hasNoKlasman = klasmanlar.length === 0;
 
+  showStartupBanner('📥 Sheets\u2019ten veriler çekiliyor...');
+
+  // ── Klasmanları çek (boşsa veya varsayılan 3'lüyse) ──
   if (isDefault || hasNoKlasman) {
-    console.log('🔄 İlk açılış: Sheets\'ten klasmanlar otomatik çekiliyor...');
-    showStartupBanner('📥 Sheets\'ten veriler çekiliyor...');
+    console.log('🔄 İlk açılış: Sheets\u2019ten klasmanlar otomatik çekiliyor...');
     try {
       const data = await jsonpFetch(url, { action: 'getKlasmanlar', token });
       if (data.status === 'ok' && Array.isArray(data.klasmanlar) && data.klasmanlar.length > 0) {
         klasmanlar = data.klasmanlar;
         nextId = Math.max(1, ...klasmanlar.map(k => k.id || 0)) + 1;
-        saveData();
         renderListe();
         renderEditor();
-        updateSidebar();
         updateKlasmanFilter();
-        renderDashboard();
-        showStartupBanner(`✅ ${klasmanlar.length} klasman Sheets'ten otomatik yüklendi!`, 'success');
-        console.log('✅ Otomatik yükleme tamamlandı:', klasmanlar.length, 'klasman');
-      } else {
-        hideStartupBanner();
+        console.log('✅ Klasmanlar yüklendi:', klasmanlar.length);
       }
     } catch(e) {
-      console.warn('Otomatik çekme hatası:', e.message);
-      hideStartupBanner();
+      console.warn('Klasman otomatik çekme hatası:', e.message);
     }
-  } else {
-    // Sadece config çek (şifre sync)
-    console.log('ℹ️ Mevcut klasmanlar var, sadece config senkronize edildi');
   }
+
+  // ── Performans verisini her zaman çek (tüm kullanıcılar güncel görsün) ──
+  try {
+    const perfData = await jsonpFetch(url, { action: 'getPerformansRaw', token });
+    if (perfData.status === 'ok' && Array.isArray(perfData.performansData) && perfData.performansData.length > 0) {
+      performansData = perfData.performansData;
+      console.log('✅ Performans verisi yüklendi:', performansData.length, 'inspector');
+    }
+  } catch(e) {
+    console.warn('Performans otomatik çekme hatası:', e.message);
+  }
+
+  // ── Tümünü kaydet ve render et ──
+  saveData();
+  updateSidebar();
+  renderDashboard();
+  renderTopInspectors();
+  showStartupBanner(`✅ Sheets senkronizasyonu tamamlandı (${klasmanlar.length} klasman, ${performansData.length} inspector)`, 'success');
+  console.log('✅ Otomatik yükleme tamamlandı');
 }
 
 function showStartupBanner(msg, type) {
@@ -2259,9 +2280,12 @@ let _pwMandatory = false;
 // Sayfa ilk açılışında şifre sor (henüz unlock olmadıysa)
 function initPasswordGate() {
   if (!klasmanUnlocked) {
-    setTimeout(() => _openPwModal(true), 400);
+    // App shell gizli kalır — sadece login overlay görünür
+    document.getElementById('pw-overlay').style.display = 'flex';
   } else {
-    // Zaten unlock — arka planda sync yap
+    // Session açık — app shell'i göster, sync yap
+    const shell = document.getElementById('app-shell');
+    if (shell) shell.style.display = 'block';
     setTimeout(() => autoFetchOnStartup(), 600);
   }
 }
@@ -2272,6 +2296,7 @@ function requirePassword(navEl) {
     return;
   }
   pendingNavEl = navEl;
+  // Modal açılırken app-shell zaten görünür olduğundan sadece overlay göster
   _openPwModal(false);
 }
 
@@ -2308,39 +2333,83 @@ function closePwModal() {
 }
 
 async function checkPassword() {
-  const val = document.getElementById('pw-input').value;
+  const val   = document.getElementById('pw-input').value.trim();
+  const errEl = document.getElementById('pw-err');
+  const btnEl = document.querySelector('.pw-btn');
+  const dotEl   = document.getElementById('pw-dot');
+  const labelEl = document.getElementById('pw-server-label');
 
-  // Sheets'ten şifre çekmeyi dene (bağlantı varsa)
-  const urlOk  = appConfig.sheetsWebAppUrl && appConfig.sheetsApiToken;
-  let sheetsPassword = null;
-  if (urlOk) {
-    try {
-      const data = await jsonpFetch(appConfig.sheetsWebAppUrl, { action: 'getConfig', token: appConfig.sheetsApiToken });
-      if (data.status === 'ok' && data.config && data.config.password) {
-        sheetsPassword = data.config.password;
-        appConfig.password = sheetsPassword;
-        localStorage.setItem(APP_CONFIG_KEY, JSON.stringify(appConfig));
-      }
-    } catch(e) { /* sessizce devam */ }
-  }
+  if (!val) { errEl.textContent = '❌ Şifre boş olamaz'; return; }
 
-  const correctPw = sheetsPassword || appConfig.password;
+  // Buton kilitle
+  if (btnEl) { btnEl.disabled = true; btnEl.textContent = '⏳ Doğrulanıyor...'; }
+  errEl.textContent = '';
+  if (dotEl)   dotEl.style.background = 'var(--amber)';
+  if (labelEl) labelEl.textContent    = 'Sunucuya bağlanılıyor...';
 
-  if (val === correctPw) {
+  const url   = appConfig.sheetsWebAppUrl;
+  const token = appConfig.sheetsApiToken;
+
+  function _unlock() {
     klasmanUnlocked = true;
     sessionStorage.setItem(SESSION_KEY, '1');
+    if (dotEl)   dotEl.style.background = 'var(--green)';
+    if (labelEl) labelEl.textContent    = 'Doğrulandı ✓';
+    const shell = document.getElementById('app-shell');
+    if (shell) shell.style.display = 'block';
     document.getElementById('pw-overlay').style.display = 'none';
-
     if (_pwMandatory) {
       _pwMandatory = false;
-      // İlk açılış: arka planda senkronize et
       setTimeout(() => autoFetchOnStartup(), 300);
     } else if (pendingNavEl) {
       showPage('klasmanlar', pendingNavEl);
     }
     pendingNavEl = null;
+  }
+
+  function _fail(msg) {
+    errEl.textContent = msg;
+    if (dotEl)   dotEl.style.background = 'var(--red)';
+    if (labelEl) labelEl.textContent    = 'Hata';
+    if (btnEl) { btnEl.disabled = false; btnEl.textContent = '🔓 Giriş Yap'; }
+  }
+
+  // ── 1. Sheets'ten şifreyi çekmeye çalış (20s timeout) ──
+  if (url && token) {
+    try {
+      const data = await jsonpFetch(url, { action: 'getConfig', token });
+      if (data.status === 'ok' && data.config && data.config.password) {
+        const sheetsPassword = data.config.password;
+        // Cache'e yaz
+        appConfig.password = sheetsPassword;
+        localStorage.setItem(APP_CONFIG_KEY, JSON.stringify(appConfig));
+        if (val === sheetsPassword) { _unlock(); return; }
+        else { _fail('❌ Yanlış şifre, tekrar deneyin'); document.getElementById('pw-input').value=''; document.getElementById('pw-input').focus(); return; }
+      }
+      // Sheets'te şifre yok ama bağlantı kuruldu
+      if (dotEl) dotEl.style.background = 'var(--amber)';
+      if (labelEl) labelEl.textContent = 'Sheets’te şifre bulunamadı';
+    } catch(e) {
+      // Zaman aşımı veya bağlantı hatası
+      console.warn('Sheets bağlantı hatası:', e.message);
+      if (dotEl)   dotEl.style.background = 'var(--amber)';
+      if (labelEl) labelEl.textContent    = 'Sunucuya ulaşılamadı';
+    }
+  }
+
+  // ── 2. Sheets'e ulaşılamazsa cache'deki şifreyi kullan ──
+  const cachedPw = appConfig.password;
+  if (cachedPw && val === cachedPw) {
+    if (labelEl) labelEl.textContent = 'Çevrimdışı doğrulama (önbellek)';
+    _unlock();
+    return;
+  }
+
+  // ── 3. Her iki yöntem de başarısız ──
+  if (!cachedPw) {
+    _fail('⚠️ Sunucuya bağlanılamadı ve önbellek bulunamadı. İnternet bağlantınızı kontrol edin.');
   } else {
-    document.getElementById('pw-err').textContent = '❌ Yanlış şifre, tekrar deneyin';
+    _fail('❌ Yanlış şifre, tekrar deneyin');
     document.getElementById('pw-input').value = '';
     document.getElementById('pw-input').focus();
   }
@@ -2569,6 +2638,47 @@ async function pushPerformansRawToSheets(liste) {
     console.log('✅ Ham performans verisi Sheets\'e gönderildi:', liste.length, 'inspector');
   } catch(err) {
     console.warn('Ham performans push hatası:', err.message);
+  }
+}
+
+// ─────────────────────────────────────────────
+// PERFORMANS VERİSİNİ SHEETS'TEN ÇEK
+// Dashboard "📥 Sheets'ten Çek" butonu + otomatik açılış
+// ─────────────────────────────────────────────
+async function pullPerformansFromSheets(silent = false) {
+  const url   = appConfig.sheetsWebAppUrl;
+  const token = appConfig.sheetsApiToken;
+  if (!url || !token) {
+    if (!silent) alert('⚠️ Sheets bağlantısı yapılandırılmamış.');
+    return false;
+  }
+
+  const btn = document.getElementById('dash-pull-btn');
+  const origText = btn ? btn.innerHTML : '';
+  if (btn) { btn.innerHTML = '⏳ Çekiliyor...'; btn.disabled = true; }
+
+  try {
+    const data = await jsonpFetch(url, { action: 'getPerformansRaw', token });
+    if (data.status === 'ok' && Array.isArray(data.performansData) && data.performansData.length > 0) {
+      performansData = data.performansData;
+      saveData();
+      renderDashboard();
+      updateSidebar();
+      renderTopInspectors();
+      if (!silent) showSuccessMessage(`✅ ${performansData.length} inspector verisi Sheets'ten yüklendi!`);
+      else showStartupBanner(`✅ ${performansData.length} inspector verisi güncellendi`, 'success');
+      console.log('✅ Performans verisi Sheets\u2019ten çekildi:', performansData.length, 'inspector');
+      return true;
+    } else {
+      if (!silent) showSuccessMessage('ℹ️ Sheets’te henüz performans verisi yok.');
+      return false;
+    }
+  } catch(err) {
+    if (!silent) alert('❌ Performans verisi çekilemedi: ' + err.message);
+    else console.warn('Performans otomatik çekme hatası:', err.message);
+    return false;
+  } finally {
+    if (btn) { btn.innerHTML = origText; btn.disabled = false; }
   }
 }
 
