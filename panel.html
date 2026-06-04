@@ -2044,7 +2044,7 @@ const APP_CONFIG_KEY = 'lc_inspection_config';
 const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbxAwsRPMbkkMF61E-L_XRsbME4-HoVbPOpBW1FQFj_DslOAh31UxOnbWBEHRwZeWBvRyQ/exec';
 const DEFAULT_API_TOKEN  = 'lcw-secret-2024';
 let appConfig = {
-  password: 'lcw2024',
+  password: '',  // Şifre localStorage veya Sheets'ten yüklenir — kaynak kodda saklanmaz
   sheetsWebAppUrl: DEFAULT_SHEETS_URL,
   sheetsViewUrl: '',
   sheetsApiToken: DEFAULT_API_TOKEN
@@ -2173,7 +2173,7 @@ async function autoFetchOnStartup() {
   try {
     const perfData = await jsonpFetch(url, { action: 'getPerformansRaw', token });
     if (perfData.status === 'ok' && Array.isArray(perfData.performansData) && perfData.performansData.length > 0) {
-      performansData = perfData.performansData;
+      performansData = restorePerformansDateObjects(perfData.performansData);
       console.log('✅ Performans verisi yüklendi:', performansData.length, 'inspector');
     }
   } catch(e) {
@@ -2550,7 +2550,7 @@ async function pullFromSheets() {
       try {
         const perfData = await gsFetch('getPerformansRaw');
         if (perfData.status === 'ok' && Array.isArray(perfData.performansData) && perfData.performansData.length > 0) {
-          performansData = perfData.performansData;
+          performansData = restorePerformansDateObjects(perfData.performansData);
           saveData();
           console.log('✅ Performans verisi Sheets\'ten çekildi:', performansData.length, 'inspector');
         }
@@ -2659,8 +2659,9 @@ async function pullPerformansFromSheets(silent = false) {
 
   try {
     const data = await jsonpFetch(url, { action: 'getPerformansRaw', token });
+    console.log('📥 getPerformansRaw yanıtı:', JSON.stringify(data).substring(0, 300));
     if (data.status === 'ok' && Array.isArray(data.performansData) && data.performansData.length > 0) {
-      performansData = data.performansData;
+      performansData = restorePerformansDateObjects(data.performansData);
       saveData();
       renderDashboard();
       updateSidebar();
@@ -2670,7 +2671,11 @@ async function pullPerformansFromSheets(silent = false) {
       console.log('✅ Performans verisi Sheets\u2019ten çekildi:', performansData.length, 'inspector');
       return true;
     } else {
-      if (!silent) showSuccessMessage('ℹ️ Sheets’te henüz performans verisi yok.');
+      const _detay = data.status !== 'ok'
+        ? ' (status: ' + (data.status || 'bilinmiyor') + ')'
+        : (Array.isArray(data.performansData) ? ' (kayıt: ' + data.performansData.length + ')' : ' (performansData alanı yok)');
+      if (!silent) showSuccessMessage('\u2139\ufe0f Sheets\'te henüz performans verisi yok.' + _detay);
+      console.warn('\u26a0\ufe0f getPerformansRaw boş/hatalı yanıt:', JSON.stringify(data).substring(0, 200));
       return false;
     }
   } catch(err) {
@@ -2761,6 +2766,29 @@ SHEET_NAME = 'Klasmanlar'      ← Sekme adı (değiştirmeye gerek yok)</div>
 // ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
 // Local Storage'dan veri yükle
+function restorePerformansDateObjects(liste) {
+  // JSON serialize/deserialize sonrası Date nesneleri string'e dönüşür.
+  // Kayıt listesindeki baslangic/bitis alanlarını tekrar Date objesine çevir.
+  if (!Array.isArray(liste)) return liste;
+  liste.forEach(inspector => {
+    if (!inspector.klasmanlar) return;
+    Object.values(inspector.klasmanlar).forEach(kd => {
+      if (!Array.isArray(kd.kayitlar)) return;
+      kd.kayitlar.forEach(k => {
+        if (k.baslangic && !(k.baslangic instanceof Date)) {
+          const d = new Date(k.baslangic);
+          k.baslangic = isNaN(d.getTime()) ? null : d;
+        }
+        if (k.bitis && !(k.bitis instanceof Date)) {
+          const d = new Date(k.bitis);
+          k.bitis = isNaN(d.getTime()) ? null : d;
+        }
+      });
+    });
+  });
+  return liste;
+}
+
 function loadData() {
   try {
     const saved = localStorage.getItem('lc_inspection_data');
@@ -2768,7 +2796,7 @@ function loadData() {
       const data = JSON.parse(saved);
       klasmanlar = data.klasmanlar || [];
       nextId = data.nextId || 1;
-      performansData = data.performansData || [];
+      performansData = restorePerformansDateObjects(data.performansData || []);
       // Verimlilik hedefini geri yükle
       if (data.verimlilikHedef && document.getElementById('inp-verimlilik')) {
         document.getElementById('inp-verimlilik').value = data.verimlilikHedef;
@@ -3436,8 +3464,10 @@ function showInspectorDetail(inspectorName) {
 
   const fmtTarih = (d) => {
     if (!d) return '—';
-    return d.toLocaleDateString('tr-TR', { day:'2-digit', month:'2-digit' }) +
-           ' ' + d.toLocaleTimeString('tr-TR', { hour:'2-digit', minute:'2-digit' });
+    const date = (d instanceof Date) ? d : new Date(d);
+    if (isNaN(date.getTime())) return '—';
+    return date.toLocaleDateString('tr-TR', { day:'2-digit', month:'2-digit' }) +
+           ' ' + date.toLocaleTimeString('tr-TR', { hour:'2-digit', minute:'2-digit' });
   };
 
   // Özet istatistikler
