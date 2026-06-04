@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Inspection Performans Paneli</title>
+<title>LC Waikiki — Inspection Performans Paneli</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
@@ -2967,19 +2967,69 @@ function hesaplaInspectorFiiliSure(kayitlar) {
 
 function hesaplaGunlukMesaiSuresi(kayitListesi) {
   if (!kayitListesi || kayitListesi.length === 0) return null;
-  const gunler = new Set();
+
+  // Her gün için o günün en geç bitiş saatini bul
+  const gunBitisSaatleri = {}; // key: toDateString(), value: en geç bitis Date
+
   kayitListesi.forEach(kayit => {
-    if (kayit.parsedBaslangic) {
-      const gun = kayit.parsedBaslangic.toDateString();
-      gunler.add(gun);
+    if (!kayit.parsedBaslangic) return;
+    const gun = kayit.parsedBaslangic.toDateString();
+    const bitis = kayit.parsedBitis || null;
+    if (!gunBitisSaatleri[gun]) {
+      gunBitisSaatleri[gun] = bitis;
+    } else if (bitis && bitis > gunBitisSaatleri[gun]) {
+      gunBitisSaatleri[gun] = bitis;
     }
   });
-  const gunSayisi = gunler.size;
-  const toplamMesaiSaniye = gunSayisi * GUNLUK_CALISMA_SANIYE;
+
+  const gunSayisi = Object.keys(gunBitisSaatleri).length;
+  let toplamMesaiSaniye = 0;
+
+  Object.entries(gunBitisSaatleri).forEach(([gunStr, enGecBitis]) => {
+    // O günün 08:00 ve sınır saatlerini oluştur
+    const gunBase = new Date(gunStr);
+    const baslangic = new Date(gunBase); baslangic.setHours(8, 0, 0, 0);
+    const normalBitis = new Date(gunBase); normalBitis.setHours(16, 30, 0, 0);  // Normal mesai sonu
+    const mesaiBitis  = new Date(gunBase); mesaiBitis.setHours(20, 0, 0, 0);   // Mesai sonu üst sınır
+
+    let gercekBitis;
+    if (!enGecBitis) {
+      // Bitiş tarihi yoksa normal mesai varsay
+      gercekBitis = normalBitis;
+    } else if (enGecBitis >= mesaiBitis) {
+      // 20:00 veya sonrası → 20:00'de kes (gece sayılmaz)
+      gercekBitis = mesaiBitis;
+    } else if (enGecBitis > normalBitis) {
+      // 16:30 ile 20:00 arasında → mesai kaldı, gerçek bitiş saati
+      gercekBitis = enGecBitis;
+    } else {
+      // 16:30 veya öncesi → normal gün
+      gercekBitis = normalBitis;
+    }
+
+    // Molalar: öğle 12:00-13:00, çay 10:00-10:15, çay 15:00-15:15
+    let sureSn = (gercekBitis - baslangic) / 1000;
+    if (sureSn <= 0) { sureSn = GUNLUK_CALISMA_SANIYE; }
+
+    function molaDus(mB_h, mB_m, mE_h, mE_m) {
+      const molaBas = new Date(gunBase); molaBas.setHours(mB_h, mB_m, 0, 0);
+      const molaEnd = new Date(gunBase); molaEnd.setHours(mE_h, mE_m, 0, 0);
+      const start = Math.max(baslangic.getTime(), molaBas.getTime());
+      const end   = Math.min(gercekBitis.getTime(), molaEnd.getTime());
+      return Math.max(0, (end - start) / 1000);
+    }
+
+    sureSn -= molaDus(12, 0, 13, 0);   // öğle molası
+    sureSn -= molaDus(10, 0, 10, 15);  // sabah çayı
+    sureSn -= molaDus(15, 0, 15, 15);  // öğleden sonra çayı
+
+    toplamMesaiSaniye += Math.max(sureSn, 0);
+  });
+
   return {
     gunSayisi,
     toplamMesaiSaniye,
-    gunlukDetay: Array.from(gunler).sort()
+    gunlukDetay: Object.keys(gunBitisSaatleri).sort()
   };
 }
 
