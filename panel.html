@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LC Waikiki — Inspection Performans Paneli</title>
+<title>Inspection Performans Paneli</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
@@ -984,7 +984,7 @@ label { font-size: 12px; font-weight: 500; color: var(--muted); display: block; 
     <div class="topbar-logo">LC</div>
     <div class="topbar-title">
       Inspection Performans
-      <small>LC Waikiki — Kalite Kontrol</small>
+      <small>Inspection Kontrol</small>
     </div>
   </div>
   <div class="topbar-right">
@@ -1489,7 +1489,7 @@ label { font-size: 12px; font-weight: 500; color: var(--muted); display: block; 
             <div class="slideshow-logo">
               <div class="slideshow-logo-icon">LC</div>
               <div class="slideshow-logo-text">
-                <div>LC Waikiki</div>
+                <div>Inspection</div>
                 <div>Inspection Performance</div>
               </div>
             </div>
@@ -1549,7 +1549,7 @@ label { font-size: 12px; font-weight: 500; color: var(--muted); display: block; 
                 <span id="slide-counter">Gösterim başlatılmadı</span>
               </div>
               <div class="slideshow-footer-center">
-                <span id="slide-title">LC Waikiki Inspection Performance Dashboard</span>
+                <span id="slide-title">Inspection Performance Dashboard</span>
               </div>
               <div class="slideshow-footer-right">
                 <span id="slide-date">--</span>
@@ -2408,7 +2408,7 @@ SHEET_NAME = 'Klasmanlar'      ← Sekme adı (değiştirmeye gerek yok)</div>
           <ol style="font-size:11px;color:var(--muted);line-height:2;padding-left:18px">
             <li>Apps Script editöründe: <strong>Dağıt → Yeni Dağıtım</strong></li>
             <li>Tür: <strong>Web uygulaması</strong></li>
-            <li>Açıklama: <em>LC Waikiki Klasman Sync v1</em></li>
+            <li>Açıklama: <em>Ürün Klasman Sync v1</em></li>
             <li>Farklı çalıştır: <strong>Ben (hesabınız)</strong></li>
             <li>Erişimi olan: <strong>Herkes</strong></li>
             <li><strong>Dağıt</strong>'a tıklayın → Google hesabı izni isteyecek, onaylayın</li>
@@ -6004,7 +6004,7 @@ const LAST_VERSION_KEY = 'lc_inspection_last_version';
 function checkVersion() {
   const lastVersion = localStorage.getItem(LAST_VERSION_KEY);
   if (lastVersion !== APP_VERSION) {
-    console.log(`🎉 LC Waikiki Inspection Panel güncellendi! v${lastVersion || '1.0.0'} → v${APP_VERSION}`);
+    console.log(`🎉 Inspection Panel güncellendi! v${lastVersion || '1.0.0'} → v${APP_VERSION}`);
     localStorage.setItem(LAST_VERSION_KEY, APP_VERSION);
     
     if (lastVersion) {
@@ -6513,7 +6513,7 @@ if (window.location.hostname === 'localhost' || window.location.hostname === '12
 }
 
 // Uygulama hazır
-console.log(`✅ LC Waikiki Inspection Performans Paneli v${APP_VERSION} hazır!`);
+console.log(`✅  Inspection Performans Paneli v${APP_VERSION} hazır!`);
 console.log(`📊 ${klasmanlar.length} klasman, ${performansData.length} inspector verisi yüklendi`);
 
 </script>
