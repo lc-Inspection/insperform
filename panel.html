@@ -1652,7 +1652,7 @@ let animationEffect = 'slide'; // slide, fade, zoom, flip
 // APP CONFIG (Tüm Ayarlar)
 // ────────────────────────────
 const APP_CONFIG_KEY = 'lc_inspection_config';
-const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbymkAClCnqRdV5dWslp3Jj5AVEV0xbe1GXTbK4fHk6gX3VKWK3CK21DAXVvENFeI1I1nA/exec';
+const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwdebEexL8mFjMIrEM0cwY5PRex_LG5ODhSl9BLxhK7EvZfY36rqLYrBvoJT6wEV88lPA/exec';
 const DEFAULT_API_TOKEN  = 'lcw-secret-2024';
 let appConfig = {
   password: '',  // Şifre localStorage veya Sheets'ten yüklenir — kaynak kodda saklanmaz
@@ -1671,15 +1671,10 @@ async function pushConfigToSheets() {
   const token = appConfig.sheetsApiToken;
   if (!url || !token) return;
   try {
-    await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({
-        action: 'setConfig',
-        token: token,
-        config: { password: appConfig.password }
-      }),
-      mode: 'no-cors'
+    await iframePost(url, {
+      action: 'setConfig',
+      token: token,
+      config: { password: appConfig.password }
     });
     console.log('✅ Config (şifre) Sheets\'e gönderildi');
   } catch(e) { console.warn('Config push hatası:', e.message); }
@@ -1729,6 +1724,65 @@ function jsonpFetch(url, params) {
     window.addEventListener('message', handler);
   });
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// iframe POST — Google Apps Script'e POST gönderir, yanıtı postMessage ile alır.
+// no-cors POST Apps Script'e ulaşıyor fakat Apps Script doPost yerine doGet'i
+// çalıştırıyor (302 redirect nedeniyle). Bu fonksiyon form submit + hidden iframe
+// yöntemi kullanarak redirect'i doğru takip eder ve iframeResp yanıtını alır.
+// ─────────────────────────────────────────────────────────────────────────────
+function iframePost(url, payload, timeoutMs = 30000) {
+  return new Promise((resolve, reject) => {
+    const iframeName = 'gs_post_' + Date.now();
+    const iframe = document.createElement('iframe');
+    iframe.name = iframeName;
+    iframe.style.cssText = 'position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;border:none;';
+    document.body.appendChild(iframe);
+
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = url;
+    form.target = iframeName;
+    form.style.display = 'none';
+
+    // JSON payload'ı tek bir hidden input olarak gönder (Apps Script text/plain bekliyor)
+    // Apps Script form POST'unda e.postData.contents = input value olur
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'payload';
+    input.value = JSON.stringify(payload);
+    form.appendChild(input);
+    document.body.appendChild(form);
+
+    const timer = setTimeout(() => {
+      cleanup();
+      // Timeout olursa başarılı kabul et (no-cors gibi — fire and forget)
+      resolve({ status: 'ok', message: 'Gönderildi (yanıt beklenmedi)' });
+    }, timeoutMs);
+
+    function handler(event) {
+      const trusted = ['googleusercontent.com', 'script.google.com'];
+      if (!trusted.some(o => event.origin.includes(o))) return;
+      clearTimeout(timer);
+      window.removeEventListener('message', handler);
+      cleanup();
+      resolve(event.data);
+    }
+
+    function cleanup() {
+      window.removeEventListener('message', handler);
+      try { if (form.parentNode) form.parentNode.removeChild(form); } catch(e) {}
+      try { if (iframe.parentNode) iframe.parentNode.removeChild(iframe); } catch(e) {}
+    }
+
+    window.addEventListener('message', handler);
+    form.submit();
+  });
+}
+
+// Apps Script doPost form POST'u için payload okuma:
+// e.postData.contents yerine e.parameter.payload kullanılır.
+// Bu yüzden Apps Script kodunu da güncellemek gerekir — bkz. açıklama.
 
 async function pullConfigFromSheets() {
   const url = appConfig.sheetsWebAppUrl;
@@ -2101,12 +2155,7 @@ async function pushToSheets() {
       klasmanlar: klasmanlar,
       savedAt: new Date().toISOString()
     };
-    await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify(payload),
-      mode: 'no-cors'  // Google Apps Script CORS kısıtlaması nedeniyle
-    });
+    await iframePost(url, payload);
     showSuccessMessage('✅ ' + klasmanlar.length + ' klasman Google Sheets\'e gönderildi!');
   } catch(err) {
     alert('❌ Gönderme hatası: ' + err.message);
@@ -2189,10 +2238,9 @@ async function pullFromSheets() {
 async function pushPerformansToSheets(liste) {
   const url = appConfig.sheetsWebAppUrl;
   const token = appConfig.sheetsApiToken;
-  if (!url || !token) return; // Bağlantı ayarı yapılmamışsa sessizce çık
+  if (!url || !token) return;
 
   try {
-    // performansData'yı düz tablo formatına çevir (Sheets için okunabilir)
     const rows = liste.map(row => ({
       ins: row.ins,
       adet: row.adet,
@@ -2207,21 +2255,14 @@ async function pushPerformansToSheets(liste) {
         .join(' | ')
     }));
 
-    const payload = {
+    await iframePost(url, {
       action: 'setPerformans',
-      token: token,
+      token,
       performans: rows,
       savedAt: new Date().toISOString()
-    };
-
-    await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify(payload),
-      mode: 'no-cors'
     });
 
-    console.log('✅ Performans verisi Sheets\'e gönderildi:', rows.length, 'inspector');
+    console.log('✅ Performans özet verisi Sheets\'e gönderildi:', rows.length, 'inspector');
   } catch(err) {
     console.warn('Performans Sheets gönderme hatası:', err.message);
   }
@@ -2236,16 +2277,11 @@ async function pushPerformansRawToSheets(liste) {
   const token = appConfig.sheetsApiToken;
   if (!url || !token) return;
   try {
-    await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({
-        action: 'setPerformansRaw',
-        token: token,
-        performansData: liste,
-        savedAt: new Date().toISOString()
-      }),
-      mode: 'no-cors'
+    await iframePost(url, {
+      action: 'setPerformansRaw',
+      token,
+      performansData: liste,
+      savedAt: new Date().toISOString()
     });
     console.log('✅ Ham performans verisi Sheets\'e gönderildi:', liste.length, 'inspector');
   } catch(err) {
@@ -2359,7 +2395,7 @@ SHEET_NAME = 'Klasmanlar'      ← Sekme adı (değiştirmeye gerek yok)</div>
         <div style="background:var(--lred);border:1px solid #FFCDD2;border-radius:10px;padding:12px 14px">
           <div style="font-size:11px;font-weight:600;color:var(--red);margin-bottom:4px">⚠️ Önemli Notlar</div>
           <ul style="font-size:11px;color:var(--muted);line-height:1.8;padding-left:16px">
-            <li>Gönderme (📤) işlemi <em>no-cors</em> modunda çalışır — yanıt göremezsiniz ama veri gider</li>
+            <li>Gönderme (📤) işlemi iframe form submit yöntemiyle çalışır — Apps Script redirect'ini doğru takip eder</li>
             <li>Çekme (📥) işlemi CORS gerektirir — Apps Script "Herkes" erişimine açık olmalı</li>
             <li>Script kodu değiştirilirse <strong>yeni bir dağıtım</strong> oluşturulmalı (eski URL değişmez)</li>
             <li>Farklı bilgisayarlarda aynı URL ve Token kullanılmalı</li>
@@ -2411,20 +2447,10 @@ async function pushPerformansManual(ev) {
         .join(' | ')
     }));
 
-    await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ action: 'setPerformans', token, performans: rows, savedAt: new Date().toISOString() }),
-      mode: 'no-cors'
-    });
+    await iframePost(url, { action: 'setPerformans', token, performans: rows, savedAt: new Date().toISOString() });
 
     // 2) Ham JSON'u gönder (farklı bilgisayardan çekilebilmesi için)
-    await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ action: 'setPerformansRaw', token, performansData, savedAt: new Date().toISOString() }),
-      mode: 'no-cors'
-    });
+    await iframePost(url, { action: 'setPerformansRaw', token, performansData, savedAt: new Date().toISOString() });
 
     showSuccessMessage(`✅ ${performansData.length} inspector verisi Google Sheets'e gönderildi!`);
   } catch(err) {
