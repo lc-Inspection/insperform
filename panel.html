@@ -2328,6 +2328,25 @@ showSuccessMessage('✅ ' + klasmanlar.length + ' klasman Google Sheets\'e gönd
   }
 }
 
+// ── KLASMAN ANALİZ STATE ──
+let _klAnalizPage = 1;
+const _KL_ANALIZ_PER_PAGE = 12;
+let _klAnalizFiltre = '';
+let _klAnalizSiralama = 'adet-desc';
+let _klAnalizTumListe = [];
+
+function _klAnalizUygula() {
+  _klAnalizPage = 1;
+  const el = document.getElementById('klasman-analiz-icerik');
+  if (el) _renderKlAnalizUI(el);
+}
+
+function _klAnalizGoTo(p) {
+  _klAnalizPage = p;
+  const el = document.getElementById('klasman-analiz-icerik');
+  if (el) _renderKlAnalizUI(el);
+}
+
 function renderKlasmanAnaliz() {
   const el = document.getElementById('klasman-analiz-icerik');
   if (!el) return;
@@ -2342,19 +2361,15 @@ function renderKlasmanAnaliz() {
     Object.entries(inspector.klasmanlar || {}).forEach(([klasmanAd, kd]) => {
       if (!klasmanMap[klasmanAd]) {
         klasmanMap[klasmanAd] = {
-          ad: klasmanAd,
-          toplamAdet: 0,
-          toplamFiiliSure: 0,
-          toplamStandartSure: 0,
-          inspectorSayisi: 0,
-          standartKontrolSure: null,
-          istasyonSure: null
+          ad: klasmanAd, toplamAdet: 0, toplamFiiliSure: 0,
+          toplamStandartSure: 0, inspectorSayisi: 0,
+          standartKontrolSure: null, istasyonSure: null
         };
       }
-      klasmanMap[klasmanAd].toplamAdet        += kd.adet || 0;
-      klasmanMap[klasmanAd].toplamFiiliSure   += kd.kayitFiiliSure || 0;
+      klasmanMap[klasmanAd].toplamAdet         += kd.adet || 0;
+      klasmanMap[klasmanAd].toplamFiiliSure    += kd.kayitFiiliSure || 0;
       klasmanMap[klasmanAd].toplamStandartSure += kd.standartSure || 0;
-      klasmanMap[klasmanAd].inspectorSayisi   += 1;
+      klasmanMap[klasmanAd].inspectorSayisi    += 1;
     });
   });
 
@@ -2365,32 +2380,96 @@ function renderKlasmanAnaliz() {
     }
   });
 
-  const liste = Object.values(klasmanMap)
+  _klAnalizTumListe = Object.values(klasmanMap)
     .filter(k => k.toplamAdet > 0)
     .sort((a, b) => b.toplamAdet - a.toplamAdet);
 
-  if (!liste.length) {
+  if (!_klAnalizTumListe.length) {
     el.innerHTML = '<div class="empty"><div class="empty-icon">🔍</div><h3>Veri bulunamadı</h3></div>';
     return;
   }
 
-  const kartlar = liste.map(k => {
+  pushKlasmanAnalizToSheets(_klAnalizTumListe);
+  _klAnalizPage = 1;
+  _klAnalizFiltre = '';
+  _klAnalizSiralama = 'adet-desc';
+  _renderKlAnalizUI(el);
+}
+
+function _klAnalizFiltrele() {
+  let liste = [..._klAnalizTumListe];
+
+  if (_klAnalizFiltre.trim()) {
+    const q = _klAnalizFiltre.trim().toLowerCase();
+    liste = liste.filter(k => k.ad.toLowerCase().includes(q));
+  }
+
+  const durumFiltre = document.getElementById('kla-durum-filtre')?.value || '';
+  if (durumFiltre === 'hedefte') {
+    liste = liste.filter(k => {
+      const g = k.toplamAdet > 0 && k.toplamFiiliSure > 0 ? k.toplamFiiliSure / k.toplamAdet : null;
+      return g !== null && k.standartKontrolSure > 0 && g <= k.standartKontrolSure;
+    });
+  } else if (durumFiltre === 'yakin') {
+    liste = liste.filter(k => {
+      const g = k.toplamAdet > 0 && k.toplamFiiliSure > 0 ? k.toplamFiiliSure / k.toplamAdet : null;
+      const s = k.standartKontrolSure;
+      return g !== null && s > 0 && g > s && g <= s * 1.2;
+    });
+  } else if (durumFiltre === 'yuksek') {
+    liste = liste.filter(k => {
+      const g = k.toplamAdet > 0 && k.toplamFiiliSure > 0 ? k.toplamFiiliSure / k.toplamAdet : null;
+      const s = k.standartKontrolSure;
+      return g !== null && s > 0 && g > s * 1.2;
+    });
+  } else if (durumFiltre === 'stdyok') {
+    liste = liste.filter(k => !k.standartKontrolSure || k.standartKontrolSure === 0);
+  }
+
+  switch (_klAnalizSiralama) {
+    case 'adet-desc':  liste.sort((a, b) => b.toplamAdet - a.toplamAdet); break;
+    case 'adet-asc':   liste.sort((a, b) => a.toplamAdet - b.toplamAdet); break;
+    case 'ad-asc':     liste.sort((a, b) => a.ad.localeCompare(b.ad, 'tr')); break;
+    case 'ad-desc':    liste.sort((a, b) => b.ad.localeCompare(a.ad, 'tr')); break;
+    case 'fark-desc':  liste.sort((a, b) => {
+      const ga = a.toplamAdet > 0 && a.toplamFiiliSure > 0 ? a.toplamFiiliSure / a.toplamAdet - (a.standartKontrolSure || 0) : -Infinity;
+      const gb = b.toplamAdet > 0 && b.toplamFiiliSure > 0 ? b.toplamFiiliSure / b.toplamAdet - (b.standartKontrolSure || 0) : -Infinity;
+      return gb - ga;
+    }); break;
+    case 'fark-asc':   liste.sort((a, b) => {
+      const ga = a.toplamAdet > 0 && a.toplamFiiliSure > 0 ? a.toplamFiiliSure / a.toplamAdet - (a.standartKontrolSure || 0) : Infinity;
+      const gb = b.toplamAdet > 0 && b.toplamFiiliSure > 0 ? b.toplamFiiliSure / b.toplamAdet - (b.standartKontrolSure || 0) : Infinity;
+      return ga - gb;
+    }); break;
+  }
+
+  return liste;
+}
+
+function _renderKlAnalizUI(el) {
+  const tumListe   = _klAnalizFiltrele();
+  const totalPages = Math.max(1, Math.ceil(tumListe.length / _KL_ANALIZ_PER_PAGE));
+  if (_klAnalizPage > totalPages) _klAnalizPage = totalPages;
+  if (_klAnalizPage < 1) _klAnalizPage = 1;
+
+  const startIdx   = (_klAnalizPage - 1) * _KL_ANALIZ_PER_PAGE;
+  const sayfaListe = tumListe.slice(startIdx, startIdx + _KL_ANALIZ_PER_PAGE);
+  const orijinal   = _klAnalizTumListe;
+
+  const hedefte = orijinal.filter(k => { const g = k.toplamAdet>0&&k.toplamFiiliSure>0?k.toplamFiiliSure/k.toplamAdet:null; return g!==null&&k.standartKontrolSure>0&&g<=k.standartKontrolSure; }).length;
+  const yakin   = orijinal.filter(k => { const g = k.toplamAdet>0&&k.toplamFiiliSure>0?k.toplamFiiliSure/k.toplamAdet:null; const s=k.standartKontrolSure; return g!==null&&s>0&&g>s&&g<=s*1.2; }).length;
+  const yuksek  = orijinal.filter(k => { const g = k.toplamAdet>0&&k.toplamFiiliSure>0?k.toplamFiiliSure/k.toplamAdet:null; const s=k.standartKontrolSure; return g!==null&&s>0&&g>s*1.2; }).length;
+  const stdYok  = orijinal.filter(k => !k.standartKontrolSure||k.standartKontrolSure===0).length;
+
+  const kartlar = sayfaListe.map(k => {
     const standart       = k.standartKontrolSure || 0;
     const istasyon       = k.istasyonSure || 0;
-    const gerceklesenOrt = k.toplamAdet > 0 && k.toplamFiiliSure > 0
-      ? k.toplamFiiliSure / k.toplamAdet : null;
-    const fark = gerceklesenOrt !== null && standart > 0
-      ? gerceklesenOrt - standart : null;
-    const yuzdeFark = fark !== null && standart > 0
-      ? Math.round((fark / standart) * 100) : null;
-    const barGenislik = gerceklesenOrt !== null && standart > 0
-      ? Math.min(200, Math.round((gerceklesenOrt / standart) * 100)) : 0;
-    const barRenk = fark === null ? 'var(--muted2)'
-      : fark <= 0 ? '#00897B'
-      : fark <= standart * 0.2 ? '#F57F17' : '#C62828';
-    const farkIkon = standart === 0 ? '⚠️ Standart süre girilmemiş'
-      : fark === null ? '—'
-      : fark <= 0 ? '▼ Hedef Altında ✓' : '▲ Hedef Üstünde';
+    const gerceklesenOrt = k.toplamAdet > 0 && k.toplamFiiliSure > 0 ? k.toplamFiiliSure / k.toplamAdet : null;
+    const fark           = gerceklesenOrt !== null && standart > 0 ? gerceklesenOrt - standart : null;
+    const yuzdeFark      = fark !== null && standart > 0 ? Math.round((fark / standart) * 100) : null;
+    const barGenislik    = gerceklesenOrt !== null && standart > 0 ? Math.min(200, Math.round((gerceklesenOrt / standart) * 100)) : 0;
+    const barRenk        = fark === null ? 'var(--muted2)' : fark <= 0 ? '#00897B' : fark <= standart * 0.2 ? '#F57F17' : '#C62828';
+    const farkIkon       = standart === 0 ? '⚠️ Standart süre girilmemiş' : fark === null ? '—' : fark <= 0 ? '▼ Hedef Altında ✓' : '▲ Hedef Üstünde';
 
     return `
     <div style="background:#fff;border:1.5px solid var(--border2);border-radius:14px;padding:20px;box-shadow:var(--shadow);position:relative;overflow:hidden;">
@@ -2436,30 +2515,119 @@ function renderKlasmanAnaliz() {
     </div>`;
   }).join('');
 
-  pushKlasmanAnalizToSheets(liste);
+  // Sayfalama butonları
+  const pageBtns = (() => {
+    let html = '';
+    let pages = [];
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      pages = [1];
+      if (_klAnalizPage > 3) pages.push('...');
+      for (let i = Math.max(2, _klAnalizPage - 1); i <= Math.min(totalPages - 1, _klAnalizPage + 1); i++) pages.push(i);
+      if (_klAnalizPage < totalPages - 2) pages.push('...');
+      pages.push(totalPages);
+    }
+    pages.forEach(p => {
+      if (p === '...') {
+        html += `<span style="padding:0 4px;color:var(--muted);line-height:32px;">…</span>`;
+      } else {
+        const active = p === _klAnalizPage;
+        html += `<button onclick="_klAnalizGoTo(${p})"
+          style="min-width:32px;height:32px;border-radius:7px;border:1px solid ${active?'var(--blue2)':'var(--border)'};
+          background:${active?'var(--blue2)':'var(--white)'};color:${active?'#fff':'var(--navy)'};
+          cursor:pointer;font-size:12px;font-weight:${active?'700':'500'};padding:0 8px;
+          font-family:'DM Sans',sans-serif;transition:all .12s;">${p}</button>`;
+      }
+    });
+    return html;
+  })();
+
+  const mevcut_filtre  = document.getElementById('kla-durum-filtre')?.value || '';
+  const mevcut_siralama = _klAnalizSiralama;
 
   el.innerHTML = `
-    <div style="background:linear-gradient(135deg,var(--navy) 0%,var(--blue) 100%);border-radius:12px;padding:16px 22px;margin-bottom:20px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;">
+    <!-- ÖZET BAŞLIK -->
+    <div style="background:linear-gradient(135deg,var(--navy) 0%,var(--blue) 100%);border-radius:12px;padding:16px 22px;margin-bottom:16px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;">
       <div style="font-size:28px;">🎯</div>
       <div style="flex:1;">
         <div style="font-size:15px;font-weight:700;color:#fff;">Klasman Bazında Gerçekleşen Süre Analizi</div>
-        <div style="font-size:11px;color:rgba(255,255,255,.6);margin-top:3px;">${liste.length} klasman · ${liste.reduce((s,k)=>s+k.toplamAdet,0).toLocaleString('tr-TR')} toplam adet</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.6);margin-top:3px;">${orijinal.length} klasman · ${orijinal.reduce((s,k)=>s+k.toplamAdet,0).toLocaleString('tr-TR')} toplam adet</div>
       </div>
       ${[
-        ['✅','Hedefte', liste.filter(k=>{const g=k.toplamAdet>0&&k.toplamFiiliSure>0?k.toplamFiiliSure/k.toplamAdet:null;return g!==null&&k.standartKontrolSure>0&&g<=k.standartKontrolSure;}).length,'#4CAF50'],
-        ['⚠️','Yakın',   liste.filter(k=>{const g=k.toplamAdet>0&&k.toplamFiiliSure>0?k.toplamFiiliSure/k.toplamAdet:null;const s=k.standartKontrolSure;return g!==null&&s>0&&g>s&&g<=s*1.2;}).length,'#FFB74D'],
-        ['🔴','Yüksek',  liste.filter(k=>{const g=k.toplamAdet>0&&k.toplamFiiliSure>0?k.toplamFiiliSure/k.toplamAdet:null;const s=k.standartKontrolSure;return g!==null&&s>0&&g>s*1.2;}).length,'#EF9A9A'],
-        ['➖','Std Yok',  liste.filter(k=>!k.standartKontrolSure||k.standartKontrolSure===0).length,'rgba(255,255,255,.5)']
-      ].map(([ic,lb,cnt,col])=>`
-        <div style="text-align:center;background:rgba(255,255,255,.1);border-radius:10px;padding:10px 16px;min-width:80px;">
+        ['✅','Hedefte','hedefte',hedefte,'#4CAF50'],
+        ['⚠️','Yakın','yakin',yakin,'#FFB74D'],
+        ['🔴','Yüksek','yuksek',yuksek,'#EF9A9A'],
+        ['➖','Std Yok','stdyok',stdYok,'rgba(255,255,255,.5)']
+      ].map(([ic,lb,val,cnt,col])=>`
+        <div onclick="document.getElementById('kla-durum-filtre').value='${val}';_klAnalizUygula()"
+          style="text-align:center;background:rgba(255,255,255,.1);border-radius:10px;padding:10px 16px;min-width:80px;cursor:pointer;transition:background .15s;"
+          onmouseover="this.style.background='rgba(255,255,255,.2)'" onmouseout="this.style.background='rgba(255,255,255,.1)'">
           <div style="font-size:16px;">${ic}</div>
           <div style="font-size:20px;font-weight:800;color:${col};font-family:'DM Mono',monospace;line-height:1.2;">${cnt}</div>
           <div style="font-size:9px;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.5px;">${lb}</div>
         </div>`).join('')}
     </div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;">
-      ${kartlar}
+
+    <!-- FİLTRE & ARAMA ÇUBUĞU -->
+    <div style="background:var(--white);border:1px solid var(--border2);border-radius:10px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;box-shadow:var(--shadow);">
+      <div style="position:relative;flex:1;min-width:180px;">
+        <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--muted2);">🔍</span>
+        <input type="text" id="kla-arama" placeholder="Klasman ara…" value="${_klAnalizFiltre}"
+          oninput="_klAnalizFiltre=this.value;_klAnalizUygula()"
+          style="width:100%;padding:8px 12px 8px 32px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;">
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <label style="font-size:11px;color:var(--muted);white-space:nowrap;margin:0;">Durum:</label>
+        <select id="kla-durum-filtre" onchange="_klAnalizUygula()"
+          style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--navy);">
+          <option value="" ${mevcut_filtre===''?'selected':''}>Tümü</option>
+          <option value="hedefte" ${mevcut_filtre==='hedefte'?'selected':''}>✅ Hedefte</option>
+          <option value="yakin" ${mevcut_filtre==='yakin'?'selected':''}>⚠️ Yakın</option>
+          <option value="yuksek" ${mevcut_filtre==='yuksek'?'selected':''}>🔴 Yüksek</option>
+          <option value="stdyok" ${mevcut_filtre==='stdyok'?'selected':''}>➖ Std Yok</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <label style="font-size:11px;color:var(--muted);white-space:nowrap;margin:0;">Sırala:</label>
+        <select onchange="_klAnalizSiralama=this.value;_klAnalizUygula()"
+          style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--navy);">
+          <option value="adet-desc" ${mevcut_siralama==='adet-desc'?'selected':''}>Adet ↓</option>
+          <option value="adet-asc"  ${mevcut_siralama==='adet-asc'?'selected':''}>Adet ↑</option>
+          <option value="ad-asc"    ${mevcut_siralama==='ad-asc'?'selected':''}>A-Z</option>
+          <option value="ad-desc"   ${mevcut_siralama==='ad-desc'?'selected':''}>Z-A</option>
+          <option value="fark-desc" ${mevcut_siralama==='fark-desc'?'selected':''}>Fark ↓ (En Kötü)</option>
+          <option value="fark-asc"  ${mevcut_siralama==='fark-asc'?'selected':''}>Fark ↑ (En İyi)</option>
+        </select>
+      </div>
+      <button onclick="_klAnalizFiltre='';_klAnalizSiralama='adet-desc';document.getElementById('kla-durum-filtre').value='';_klAnalizUygula()"
+        style="padding:7px 14px;border:1px solid var(--border);border-radius:8px;font-size:12px;background:var(--white);cursor:pointer;color:var(--muted);font-family:'DM Sans',sans-serif;transition:all .15s;"
+        onmouseover="this.style.background='var(--lblue3)'" onmouseout="this.style.background='var(--white)'">↺ Sıfırla</button>
+      <span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-left:auto;">
+        ${tumListe.length} / ${orijinal.length} klasman · Sayfa ${_klAnalizPage}/${totalPages}
+      </span>
     </div>
+
+    <!-- KARTLAR -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin-bottom:20px;">
+      ${kartlar || '<div style="grid-column:1/-1;padding:48px;text-align:center;color:var(--muted2);"><div style="font-size:32px;margin-bottom:12px;">🔍</div><h3 style="font-weight:500;color:var(--muted);">Filtreye uyan klasman bulunamadı</h3></div>'}
+    </div>
+
+    <!-- SAYFALAMA -->
+    ${totalPages > 1 ? `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-top:1px solid var(--border2);margin-top:4px;">
+      <button onclick="_klAnalizGoTo(${_klAnalizPage - 1})" ${_klAnalizPage<=1?'disabled':''}
+        style="padding:8px 16px;border:1px solid var(--border);border-radius:8px;font-size:13px;cursor:pointer;
+        background:var(--white);color:var(--navy);font-family:'DM Sans',sans-serif;font-weight:500;
+        opacity:${_klAnalizPage<=1?'.4':'1'};transition:all .15s;">‹ Önceki</button>
+      <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;justify-content:center;">
+        ${pageBtns}
+      </div>
+      <button onclick="_klAnalizGoTo(${_klAnalizPage + 1})" ${_klAnalizPage>=totalPages?'disabled':''}
+        style="padding:8px 16px;border:1px solid var(--border);border-radius:8px;font-size:13px;cursor:pointer;
+        background:var(--white);color:var(--navy);font-family:'DM Sans',sans-serif;font-weight:500;
+        opacity:${_klAnalizPage>=totalPages?'.4':'1'};transition:all .15s;">Sonraki ›</button>
+    </div>` : ''}
   `;
 }
 
