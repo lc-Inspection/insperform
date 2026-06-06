@@ -2212,11 +2212,7 @@ async function pushToSheets() {
         };
       }
       klasmanMap[klasmanAd].toplamAdet       += kd.adet || 0;
-      let fiiliSure = kd.kayitFiiliSure || 0;
-      if (!fiiliSure && Array.isArray(kd.kayitlar)) {
-        kd.kayitlar.forEach(r => { if (r.kayitFiiliSure > 0) fiiliSure += r.kayitFiiliSure; });
-      }
-      klasmanMap[klasmanAd].toplamFiiliSure  += fiiliSure;
+      klasmanMap[klasmanAd].toplamFiiliSure  += kd.kayitFiiliSure || 0;
       klasmanMap[klasmanAd].toplamStandartSure += kd.standartSure || 0;
       klasmanMap[klasmanAd].inspectorSayisi  += 1;
     });
