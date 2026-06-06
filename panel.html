@@ -1683,7 +1683,7 @@ let animationEffect = 'slide'; // slide, fade, zoom, flip
 // APP CONFIG (Tüm Ayarlar)
 // ────────────────────────────
 const APP_CONFIG_KEY = 'lc_inspection_config';
-const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwdM3FVaN1O-ebOcCHAFmGXPZ3jXPi2Z7QQIM1wIfEj_npmtxQbVKZfnUFM4Yzc2jabPQ/exec';
+const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwht7FA2SVf2uvrYIy2OxMDZ7HPCWj9X7moaPy2zfDlI0C5d2JdkdBbSxx0ekmiyz8NZQ/exec';
 const DEFAULT_API_TOKEN  = 'lcw-secret-2024';
 let appConfig = {
   password: '',  // Şifre localStorage veya Sheets'ten yüklenir — kaynak kodda saklanmaz
@@ -1731,7 +1731,7 @@ function jsonpFetch(url, params) {
                           '&token='  + encodeURIComponent(token);
     Object.entries(params).forEach(([k, v]) => {
       if (k !== 'action' && k !== 'token') {
-        iframeUrl += '&' + encodeURIComponent(k) + '=' + encodeURIComponent(v);
+        iframeUrl += '&' + encodeURIComponent(k) + '=' + encodeURIComponent(String(v).normalize('NFC'));
       }
     });
 
@@ -3616,7 +3616,7 @@ async function showInspectorDetail(inspectorName) {
     const token = appConfig.sheetsApiToken;
     if (url && token) {
       try {
-        const data = await jsonpFetch(url, { action: 'getInspectorKayitlar', token, inspectorAdi: inspectorName });
+        const data = await jsonpFetch(url, { action: 'getInspectorKayitlar', token, inspectorAdi: inspectorName.normalize('NFC') });
         if (data.status === 'ok' && data.kayitlar && typeof data.kayitlar === 'object') {
           // Çekilen kayitlar'ı inspector nesnesine işle
           // NOT: Sheets'teki klasman adı ile performansData'daki klasman adı
