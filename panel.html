@@ -1710,7 +1710,7 @@ let animationEffect = 'slide'; // slide, fade, zoom, flip
 // APP CONFIG (Tüm Ayarlar)
 // ────────────────────────────
 const APP_CONFIG_KEY = 'lc_inspection_config';
-const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbzxQ2PunVNaI7h2QgOV71hH5OS7YH9B6Qp_K-Y77s0OAGw0ShlTmkAIdEUwquwpdZaudA/exec';
+const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwWsl1LZQ76GPT51KCjYH8a86RC2Il9x617YvsR4CExoZpCp-fwFGTs0Q8gtHk1HAmnIg/exec';
 const DEFAULT_API_TOKEN  = 'lcw-secret-2024';
 let appConfig = {
   password: '',  // Şifre localStorage veya Sheets'ten yüklenir — kaynak kodda saklanmaz
@@ -3381,14 +3381,46 @@ function saveData() {
 
 function saveDashboardData() { saveData(); }
 
-function clearDashboardData() {
-  if (!confirm('Tüm performans verilerini silmek istiyor musunuz?')) return;
+async function clearDashboardData() {
+  if (!confirm('⚠️ Tüm performans verileri silinecek!\n\nBu işlem:\n• Dashboard verilerini temizler\n• Google Sheets\'teki İşlem Geçmişi, Performans Verileri, PerformansRaw ve InspectorKayitlar sekmelerini siler\n\nDevam etmek istiyor musunuz?')) return;
+
+  const url   = appConfig.sheetsWebAppUrl;
+  const token = appConfig.sheetsApiToken;
+
+  const btn = document.querySelector('button[onclick="clearDashboardData()"]');
+  const origText = btn ? btn.innerHTML : '';
+  if (btn) { btn.innerHTML = '⏳ Temizleniyor...'; btn.disabled = true; }
+
   performansData = [];
   excelRows = [];
   excelCols = [];
   currentDashboardPage = 1;
   saveData();
   renderDashboard();
+  renderPerfTabloFromData();
+  updateSidebar();
+  renderTopInspectors();
+
+  if (url && token) {
+    try {
+      await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({
+          action: 'clearPerformansData',
+          token: token
+        }),
+        mode: 'no-cors'
+      });
+      showSuccessMessage('✅ Veriler temizlendi! (Local + Sheets)');
+    } catch(err) {
+      showSuccessMessage('✅ Local veriler temizlendi. Sheets bağlantı hatası: ' + err.message);
+    }
+  } else {
+    showSuccessMessage('✅ Local veriler temizlendi. (Sheets bağlantısı yapılandırılmamış)');
+  }
+
+  if (btn) { btn.innerHTML = origText; btn.disabled = false; }
   showFileStatus('🗑️ Tüm performans verileri temizlendi', 'var(--amber)');
 }
 
