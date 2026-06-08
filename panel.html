@@ -3406,21 +3406,42 @@ function restorePerformansDateObjects(liste) {
 
 // ─────────────────────────────────────────────
 // PULL SONRASI verimlilikPerf DÜZELT
-// Sheets'te yanlış push yapılmışsa (farklı bilgisayar, farklı inp-verimlilik),
-// mevcut bilgisayardaki inp-verimlilik input değerini kullanarak yeniden hesapla.
-// Bu sayede hangi bilgisayardan push yapılmış olursa olsun tutarlı sonuç çıkar.
+// Sheets'ten gelen hedefVerimlilik'i inp-verimlilik input'una yazar,
+// verimlilikPerf'i de bu değere göre yeniden hesaplar.
+// Böylece hangi bilgisayardan pull yapılırsa yapılsın doğru değer görünür.
 // ─────────────────────────────────────────────
 function fixVerimlilikPerf(liste) {
-  if (!Array.isArray(liste)) return liste;
-  // Mevcut bilgisayardaki hedef değeri al (DOM hazırsa), değilse her row'un kendi hedefini kullan
+  if (!Array.isArray(liste) || liste.length === 0) return liste;
+
+  // 1) Sheets'ten gelen hedefVerimlilik değerini bul (ilk geçerli kayıttan al)
+  let sheetsHedef = null;
+  for (const inspector of liste) {
+    if (inspector.hedefVerimlilik && inspector.hedefVerimlilik !== 100) {
+      sheetsHedef = inspector.hedefVerimlilik;
+      break;
+    }
+  }
+  // Tümü 100 ise de al (en azından tutarlı olsun)
+  if (!sheetsHedef) sheetsHedef = liste[0]?.hedefVerimlilik || 100;
+
+  // 2) inp-verimlilik input'unu güncelle — bu bilgisayarda da doğru hedef görünsün
   const inputEl = document.getElementById('inp-verimlilik');
-  const globalHedef = inputEl ? Math.max(1, parseFloat(inputEl.value) || 100) : null;
+  if (inputEl) {
+    inputEl.value = sheetsHedef;
+    // Açıklama label'ını da güncelle
+    const vAciklama = document.getElementById('verimlilik-aciklama');
+    if (vAciklama) {
+      if (sheetsHedef === 100) vAciklama.textContent = '';
+      else if (sheetsHedef < 100) vAciklama.textContent = `(%${sheetsHedef} hedef → performans ${(100/sheetsHedef).toFixed(2)}x çarpanla artar) `;
+      else vAciklama.textContent = `(%${sheetsHedef} hedef → performans ${(100/sheetsHedef).toFixed(2)}x çarpanla azalır) `;
+    }
+  }
+
+  // 3) Her inspector'ın verimlilikPerf ve hedefVerimlilik'ini güncelle
   liste.forEach(inspector => {
-    const hedef = globalHedef || inspector.hedefVerimlilik || 100;
-    // hedefVerimlilik'i de güncelle — gelecekteki push'larda doğru gitsin
-    inspector.hedefVerimlilik = hedef;
+    inspector.hedefVerimlilik = sheetsHedef;
     if (inspector.genelHizPerf !== null && inspector.genelHizPerf !== undefined) {
-      inspector.verimlilikPerf = Math.round(inspector.genelHizPerf * (100 / hedef));
+      inspector.verimlilikPerf = Math.round(inspector.genelHizPerf * (100 / sheetsHedef));
     }
   });
   return liste;
@@ -3433,11 +3454,24 @@ function loadData() {
       const data = JSON.parse(saved);
       klasmanlar = data.klasmanlar || [];
       nextId = data.nextId || 1;
-      // Verimlilik hedefini ÖNCE geri yükle — fixVerimlilikPerf bu değeri okuyacak
+      // Verimlilik hedefini ÖNCE geri yükle — fixVerimlilikPerf bu değeri referans alacak
       if (data.verimlilikHedef && document.getElementById('inp-verimlilik')) {
         document.getElementById('inp-verimlilik').value = data.verimlilikHedef;
       }
-      performansData = fixVerimlilikPerf(restorePerformansDateObjects(data.performansData || []));
+      // performansData'yı yükle ve verimlilikPerf'i güncelle
+      // (fixVerimlilikPerf inp-verimlilik'e yazılmış olan localStorage hedefini kullanır)
+      const rawListe = restorePerformansDateObjects(data.performansData || []);
+      // localStorage'dan yüklerken Sheets'ten gelen hedef varsa kullan, yoksa localStorage hedefi
+      const lsHedef = data.verimlilikHedef || 100;
+      rawListe.forEach(inspector => {
+        if (!inspector.hedefVerimlilik || inspector.hedefVerimlilik === 100) {
+          inspector.hedefVerimlilik = lsHedef;
+        }
+        if (inspector.genelHizPerf !== null && inspector.genelHizPerf !== undefined) {
+          inspector.verimlilikPerf = Math.round(inspector.genelHizPerf * (100 / inspector.hedefVerimlilik));
+        }
+      });
+      performansData = rawListe;
       console.log('✅ localStorage\'dan yüklendi:', klasmanlar.length, 'klasman,', performansData.length, 'inspector');
     } else {
       // İlk kurulum - örnek veriler
