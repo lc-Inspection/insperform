@@ -1737,17 +1737,23 @@ async function pushConfigToSheets() {
   const token = appConfig.sheetsApiToken;
   if (!url || !token) return;
   try {
+    let geminiKey = '';
+    try { geminiKey = localStorage.getItem('gemini_api_key_perf_panel') || ''; } catch(e) {}
     await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({
         action: 'setConfig',
         token: token,
-        config: { password: appConfig.password, klasmanPassword: appConfig.klasmanPassword }
+        config: {
+          password: appConfig.password,
+          klasmanPassword: appConfig.klasmanPassword,
+          geminiApiKey: geminiKey
+        }
       }),
       mode: 'no-cors'
     });
-    console.log('✅ Config (şifre) Sheets\'e gönderildi');
+    console.log('✅ Config (şifre + Gemini key) Sheets\'e gönderildi');
   } catch(e) { console.warn('Config push hatası:', e.message); }
 }
 
@@ -1811,6 +1817,13 @@ async function pullConfigFromSheets() {
     if (data.status === 'ok' && data.config) {
       if (data.config.password)        appConfig.password        = data.config.password;
       if (data.config.klasmanPassword) appConfig.klasmanPassword = data.config.klasmanPassword;
+      // Gemini API key varsa localStorage'a yaz ve input'a doldur
+      if (data.config.geminiApiKey) {
+        try { localStorage.setItem('gemini_api_key_perf_panel', data.config.geminiApiKey); } catch(e) {}
+        const keyInput = document.getElementById('ao-gkey');
+        if (keyInput) keyInput.value = data.config.geminiApiKey;
+        console.log('✅ Gemini API anahtarı Sheets\'ten yüklendi');
+      }
       localStorage.setItem(APP_CONFIG_KEY, JSON.stringify(appConfig));
       console.log('✅ Config Sheets\'ten çekildi');
       return true;
@@ -7680,13 +7693,23 @@ function aoGkeySave() {
   var val = document.getElementById('ao-gkey').value.trim();
   if (!val) { aoSetKeyStatus('⚠️ Boş bırakmayın.', '#E65100'); return; }
   if (val.length < 10) { aoSetKeyStatus('⚠️ Geçersiz format. API anahtarı çok kısa.', '#E65100'); return; }
-  try { localStorage.setItem(AO_LS_KEY, val); aoSetKeyStatus('✅ Anahtar kaydedildi!', '#00897B'); }
+  try {
+    localStorage.setItem(AO_LS_KEY, val);
+    aoSetKeyStatus('✅ Kaydedildi! Sheets\'e gönderiliyor...', '#00897B');
+    // Sheets'e de push et — diğer bilgisayarlar pull'da otomatik alacak
+    pushConfigToSheets().then(function() {
+      aoSetKeyStatus('✅ Anahtar kaydedildi ve Sheets\'e gönderildi!', '#00897B');
+    }).catch(function() {
+      aoSetKeyStatus('✅ Yerel kaydedildi (Sheets bağlantısı yok).', '#F57F17');
+    });
+  }
   catch(e) { aoSetKeyStatus('❌ Kayıt başarısız: ' + e.message, '#C62828'); }
 }
 function aoGkeyDelete() {
   try { localStorage.removeItem(AO_LS_KEY); } catch(e) {}
   document.getElementById('ao-gkey').value = '';
-  aoSetKeyStatus('🗑 Anahtar silindi.', '#5A7FA8');
+  aoSetKeyStatus('🗑 Anahtar silindi. Sheets\'ten temizleniyor...', '#5A7FA8');
+  pushConfigToSheets().catch(function(){});
 }
 function aoSetKeyStatus(msg, color) {
   var el = document.getElementById('ao-gkey-status');
