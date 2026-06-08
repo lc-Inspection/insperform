@@ -1866,11 +1866,10 @@ let perfData = null;
     if (perfData && perfData.status === 'ok' && Array.isArray(perfData.performansData) && perfData.performansData.length > 0) {
       performansData = restorePerformansDateObjects(perfData.performansData);
       console.log('✅ Performans verisi yüklendi:', performansData.length, 'inspector');
-      const _hedef = Math.max(1, parseFloat(document.getElementById('inp-verimlilik')?.value) || 100);
      performansData.forEach(row => {
-  const _hedef = Math.max(1, parseFloat(document.getElementById('inp-verimlilik')?.value) || 100);
+  const _h = row.hedefVerimlilik || 100;
   row.verimlilikPerf = row.genelHizPerf !== null && row.genelHizPerf !== undefined
-    ? Math.round(row.genelHizPerf * (100 / _hedef)) : null;
+    ? Math.round(row.genelHizPerf * (100 / _h)) : null;
 });
     }
   } catch(e) {
@@ -2972,11 +2971,10 @@ async function pullPerformansFromSheets(silent = false) {
     console.log('📥 getPerformansRaw yanıtı:', JSON.stringify(data).substring(0, 300));
     if (data.status === 'ok' && Array.isArray(data.performansData) && data.performansData.length > 0) {
       performansData = restorePerformansDateObjects(data.performansData);
-      const _h2 = Math.max(1, parseFloat(document.getElementById('inp-verimlilik')?.value) || 100);
-performansData.forEach(row => {
-  const _h2 = Math.max(1, parseFloat(document.getElementById('inp-verimlilik')?.value) || 100);
+     performansData.forEach(row => {
+  const _h = row.hedefVerimlilik || 100;
   row.verimlilikPerf = row.genelHizPerf !== null && row.genelHizPerf !== undefined
-    ? Math.round(row.genelHizPerf * (100 / _h2)) : null;
+    ? Math.round(row.genelHizPerf * (100 / _h)) : null;
 });
       saveData();
       renderDashboard();
@@ -5584,6 +5582,7 @@ function performansHesapla(){
       genelHacimPerf: null,
       // Verimlilik düzeltmeli performans
       verimlilikPerf: performans !== null ? Math.round(performans * (100 / verimlilikHedef)) : null,
+      hedefVerimlilik: verimlilikHedef,
       tarihBasariliKayit: inspectorData.kayitListesi.length,
       gunSayisi: mesaiHesap ? mesaiHesap.gunSayisi : 0,
       gunlukDetay: mesaiHesap ? mesaiHesap.gunlukDetay : [],
