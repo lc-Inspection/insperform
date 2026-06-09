@@ -7496,6 +7496,36 @@ var _aoHedef       = 100;
 
 var AO_LS_KEY = 'gemini_api_key_perf_panel';
 
+// Sheets Config sekmesinden Gemini key çekip input'a ve localStorage'a yazar
+function _aoFetchGeminiKeyFromSheets() {
+  if (!appConfig.sheetsUrl) return;
+  var url = appConfig.sheetsUrl + '?action=getConfig&token=' + encodeURIComponent(appConfig.token || '');
+  var iframe = document.createElement('iframe');
+  iframe.style.display = 'none';
+  document.body.appendChild(iframe);
+  var handler = function(event) {
+    try {
+      var data = (typeof event.data === 'string') ? JSON.parse(event.data) : event.data;
+      if (data && data.config && data.config.geminiApiKey) {
+        var key = data.config.geminiApiKey;
+        try { localStorage.setItem(AO_LS_KEY, key); } catch(e) {}
+        var inp = document.getElementById('ao-gkey');
+        if (inp) inp.value = key;
+        aoGkeyStatus('✅ Anahtar Sheets\'ten yüklendi', '#2E7D32');
+      }
+    } catch(e) {}
+    window.removeEventListener('message', handler);
+    try { document.body.removeChild(iframe); } catch(e) {}
+  };
+  window.addEventListener('message', handler);
+  iframe.src = url;
+  // 8 saniye sonra temizle
+  setTimeout(function() {
+    window.removeEventListener('message', handler);
+    try { document.body.removeChild(iframe); } catch(e) {}
+  }, 8000);
+}
+
 function openAnalizOverlay(inspData, inspObj, hedef) {
   _aoData      = inspData;
   _aoInspector = inspObj;
@@ -7521,11 +7551,18 @@ function openAnalizOverlay(inspData, inspObj, hedef) {
   document.getElementById('ao-f-minadet').value  = 0;
   document.getElementById('ao-f-sort').value     = '';
 
-  // Gemini kayıtlı key yükle
-  try {
-    var savedKey = localStorage.getItem(AO_LS_KEY) || '';
-    if (savedKey) document.getElementById('ao-gkey').value = savedKey;
-  } catch(e) {}
+  // Gemini kayıtlı key yükle — önce localStorage, yoksa Sheets'ten çek
+  (function() {
+    try {
+      var savedKey = localStorage.getItem(AO_LS_KEY) || '';
+      if (savedKey) {
+        document.getElementById('ao-gkey').value = savedKey;
+      } else {
+        // localStorage'da yok → Sheets Config'den anlık çek
+        _aoFetchGeminiKeyFromSheets();
+      }
+    } catch(e) {}
+  })();
 
   // Sonuçları sıfırla
   document.getElementById('ao-gresult').style.display  = 'none';
@@ -7787,7 +7824,25 @@ function aoCallGemini(userPrompt, title) {
   var key = '';
   try { key = localStorage.getItem(AO_LS_KEY) || ''; } catch(e) {}
   if (!key) key = (document.getElementById('ao-gkey').value || '').trim();
-  if (!key) { aoShowErr('Lütfen önce Gemini API anahtarınızı girin ve kaydedin.'); return; }
+  if (!key) {
+    // Sheets'ten çekmeyi dene
+    if (appConfig.sheetsUrl) {
+      aoShowErr('Anahtar bulunamadı. Sheets\'ten yükleniyor, lütfen bekleyin...');
+      _aoFetchGeminiKeyFromSheets();
+      setTimeout(function() {
+        try { key = localStorage.getItem(AO_LS_KEY) || ''; } catch(e) {}
+        if (key) {
+          aoShowErr('');
+          aoCallGemini(userPrompt, title);
+        } else {
+          aoShowErr('Anahtar yüklenemedi. Lütfen Gemini API anahtarını manuel olarak girin.');
+        }
+      }, 4000);
+    } else {
+      aoShowErr('Lütfen önce Gemini API anahtarınızı girin ve kaydedin.');
+    }
+    return;
+  }
 
   var fullPrompt = 'Sen bir üretim performans analisti asistanısın. Aşağıdaki inspection/kalite kontrol çalışanına ait performans verileri sana verilmiştir. Bu verileri analiz et ve kullanıcının sorusuna yanıt ver.\n\n'
     + 'PERFORMANS VERİLERİ:\n' + _aoDataSummary() + '\n\n'
