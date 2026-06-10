@@ -4,7 +4,7 @@
 const CACHE_NAME = 'ip-v2';
 
 // HTML dosyanın adı neyse onu yaz (büyük/küçük harf önemli)
-const PAGE_URL = './Panel_v16_pwa.html';
+const PAGE_URL = './panel.html';
 
 self.addEventListener('install', function(e) {
   e.waitUntil(
