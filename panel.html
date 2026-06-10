@@ -4,20 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Inspection Performans Paneli</title>
-<!-- ─── SW SELF-INTERCEPT: Chrome same-origin SW trick ─── -->
-<script>
-(function(){
-  // Bu HTML dosyası hem uygulama hem de Service Worker olarak çalışır.
-  // ?_sw=1 parametresi ile açıldığında SW modunda çalışır.
-  if (typeof window === 'undefined') return; // güvenlik
-  var url = new URL(window.location.href);
-  if (url.searchParams.get('_sw') === '1') {
-    // Bu sekme SW olarak kullanılmıyor; ama bu URL'yi SW olarak kaydedeceğiz.
-    // Burada hiçbir şey yapma — sadece ana sayfa olarak yüklensin.
-    // SW kodu aşağıda registerSW() içinde URL.searchParams ile kontrol edilir.
-  }
-})();
-</script>
 <!-- ─── PWA META ─── -->
 <meta name="application-name" content="Inspection Panel">
 <meta name="description" content="Inspector Performans Takip Paneli">
@@ -27,7 +13,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Inspection">
 <meta name="msapplication-TileColor" content="#0B1F3A">
-<link rel="manifest" id="pwa-manifest-link">
+<link rel="manifest" href="manifest.json">
 <!-- inline SVG icon as data URI for apple-touch-icon -->
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='38' fill='%230B1F3A'/%3E%3Crect x='20' y='20' width='152' height='152' rx='24' fill='%231565C0'/%3E%3Ctext x='96' y='118' text-anchor='middle' font-family='Arial,sans-serif' font-size='72' font-weight='700' fill='white'%3ELC%3C/text%3E%3C/svg%3E">
 <!-- ─── END PWA META ─── -->
@@ -8707,63 +8693,18 @@ function exportInspectorDetailFromOverlay() {
 
 // ════════════════════════════════════════════════════════════════════════════════
 // ─── PWA — PROGRESSIVE WEB APP ───────────────────────────────────────────────
-// ════════════════════════════════════════════════════════════════════════════════
-// Chrome'da beforeinstallprompt tetiklenmesi için SW same-origin URL'den kaydedilmeli.
-// Çözüm: Bu HTML dosyasını ?_sw=1 parametresiyle SW olarak kaydet (self-referencing SW).
-// Chrome bu tekniği kabul eder çünkü same-origin URL'dir.
 
-// ── SW SELF-INTERCEPT: Bu sayfa ?_sw=1 ile istenirse SW olarak yanıt ver ──────
-(function interceptSWRequest() {
-  // Bu blok normal tarayıcı penceresinde çalışır — ama ServiceWorker context'inde
-  // bu script zaten çalışmaz. SW kodu ayrıca registerSW içinde gönderilir.
-  // Burada sadece manifest inject ediyoruz.
-})();
-
-// 1) Inline Web App Manifest ─────────────────────────────────────────────────
-//    Chrome manifest için Blob URL'yi kabul eder (SW'den farklı).
-(function injectManifest() {
-  var pageUrl = window.location.href.split('#')[0].split('?')[0];
-  // scope: dizin olmalı (Chrome gereksinimi), tam dosya URL'si değil
-  var scopeUrl = pageUrl.substring(0, pageUrl.lastIndexOf('/') + 1);
-  var manifest = {
-    name: 'Inspection Performans Paneli',
-    short_name: 'Inspection',
-    description: 'Inspector performans takip ve analiz paneli',
-    start_url: pageUrl,
-    scope: scopeUrl,
-    display: 'standalone',
-    orientation: 'landscape-primary',
-    background_color: '#0B1F3A',
-    theme_color: '#0B1F3A',
-    lang: 'tr',
-    icons: [
-      { src: _pwaIcon(192), sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
-      { src: _pwaIcon(512), sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
-    ]
-  };
-  try {
-    var blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
-    var url  = URL.createObjectURL(blob);
-    var link = document.getElementById('pwa-manifest-link');
-    if (link) link.href = url;
-    console.log('[PWA] Manifest injected, scope:', scopeUrl);
-  } catch(e) { console.warn('[PWA] manifest inject failed:', e); }
-})();
-
-// PNG icon — canvas ile çiz (SVG data URI yerine gerçek PNG — Chrome bunu kabul eder)
+// Icon canvas helper (hâlâ kullanılabilir başka yerlerde olabilir diye bırakıldı)
 function _pwaIcon(size) {
   try {
     var c = document.createElement('canvas');
     c.width = c.height = size;
     var ctx = c.getContext('2d');
     var r = size * 0.2;
-    // Arka plan
     ctx.fillStyle = '#0B1F3A';
     _roundRect(ctx, 0, 0, size, size, r); ctx.fill();
-    // İç mavi kare
     ctx.fillStyle = '#1565C0';
     _roundRect(ctx, size*.07, size*.07, size*.86, size*.86, r*.7); ctx.fill();
-    // Metin
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold ' + Math.round(size*.38) + 'px Arial,sans-serif';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -8781,108 +8722,23 @@ function _roundRect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-// 2) Service Worker — Self-Referencing SW (Chrome Compatible) ─────────────────
-//    Bu HTML sayfasının URL'si ?_sw=1 eklenerek SW olarak kaydedilir.
-//    Chrome same-origin SW zorunluluğunu bu şekilde karşılarız.
-//    SW kodu: fetch event handler bu sayfa için özel olarak çalışır.
+// ── Service Worker Kaydı ──────────────────────────────────────────────────────
 (function registerSW() {
   if (!('serviceWorker' in navigator)) {
-    console.warn('[PWA] SW not supported');
+    console.warn('[PWA] SW desteklenmiyor');
     return;
   }
-
-  var pageUrl   = window.location.href.split('#')[0].split('?')[0];
-  var scopeUrl  = pageUrl.substring(0, pageUrl.lastIndexOf('/') + 1);
-
-  // SW kodu — bu HTML dosyasının başında <head>'e inject edilmiş interceptor
-  // ile birlikte çalışır. SW olarak kaydedilince fetch eventleri yakalar.
-  var swCode = `
-const CACHE_NAME = 'ip-v3';
-const PAGE_URL   = '${pageUrl}';
-
-self.addEventListener('install', e => {
-  e.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(c => c.add(PAGE_URL))
-      .then(() => self.skipWaiting())
-      .catch(err => console.warn('[SW] cache add failed:', err))
-  );
-});
-
-self.addEventListener('activate', e => {
-  e.waitUntil(
-    caches.keys()
-      .then(keys => Promise.all(
-        keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
-      ))
-      .then(() => self.clients.claim())
-  );
-});
-
-self.addEventListener('fetch', e => {
-  if (e.request.method !== 'GET') return;
-  // _sw=1 parametreli istekleri yakala — SW olarak özel yanıt ver
-  const url = new URL(e.request.url);
-  if (url.searchParams.get('_sw') === '1') {
-    // Bu istek SW kaydı için değil, boş JS döndür
-    e.respondWith(new Response('/* sw ok */', {
-      headers: { 'Content-Type': 'application/javascript' }
-    }));
-    return;
-  }
-  e.respondWith(
-    caches.match(e.request).then(cached => {
-      if (cached) return cached;
-      return fetch(e.request).then(resp => {
-        if (resp && resp.ok && resp.type === 'basic') {
-          const clone = resp.clone();
-          caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
-        }
-        return resp;
-      });
-    })
-  );
-});
-`;
-
-  // Önce: aynı dizinde sw.js var mı? (GitHub Pages'te ayrı dosya olarak konulduysa)
-  var swJsUrl = scopeUrl + 'sw.js';
-
-  function registerWithBlob() {
-    // Chrome Blob SW reddeder. Bunun yerine: bu sayfanın URL'si + ?_sw=1
-    // parametresi ile farklı bir yaklaşım: SW kodunu data: URL ile dene
-    // (Chrome 91+ data: URL SW destekliyor mu? — Hayır.)
-    // En güvenilir fallback: sw.js fetch edip Blob yap
-    console.log('[PWA] Trying inline SW via page URL trick...');
-
-    // Self-referencing: bu HTML'in URL'sine ?_sw=1 ekle
-    // Chrome bunu same-origin olarak kabul eder!
-    var swSelfUrl = pageUrl + '?_sw=1';
-
-    // Ama bu URL HTML döner, JS değil — Chrome bunu SW olarak kabul etmez.
-    // Gerçek çözüm: SW kodunu fetch ile kendi URL'mizden isteyen bir endpoint simüle etmek.
-    // Bunu yapamayız. O zaman sw.js dosyasını dinamik olarak create ediyoruz:
-
-    // GitHub Pages / static host için: sw.js dosyası repository'ye eklenmeli.
-    // Eğer yoksa, kullanıcıya bilgi ver ama butonu yine de göster.
-    console.warn('[PWA] sw.js not found at:', swJsUrl);
-    console.warn('[PWA] To enable Chrome install prompt, add sw.js to your repository.');
-    console.log('[PWA] Chrome install button will show manual guide until sw.js is added.');
-    // Yine de butonu göster — kullanıcı adres çubuğundaki ikona tıklayabilir
-    // veya Chrome'un kendisi SW olmadan da bazı durumlarda prompt gösterir
-  }
-
-  navigator.serviceWorker.register(swJsUrl, { scope: scopeUrl })
+  // sw.js her zaman root scope'da kayıt olmalı
+  navigator.serviceWorker.register('./sw.js', { scope: './' })
     .then(function(reg) {
-      console.log('[PWA] ✅ SW registered from sw.js, scope:', reg.scope);
+      console.log('[PWA] ✅ SW kayıtlı, scope:', reg.scope);
     })
     .catch(function(err) {
-      console.warn('[PWA] sw.js not found:', err.message);
-      registerWithBlob();
+      console.error('[PWA] ❌ SW kayıt hatası:', err.message);
     });
 })();
 
-// 3) Install Prompt
+// ── Install Prompt ────────────────────────────────────────────────────────────
 var _pwaInstallPrompt = null;
 var _pwaInstallable   = false;
 
@@ -8891,7 +8747,7 @@ window.addEventListener('beforeinstallprompt', function(e) {
   _pwaInstallPrompt = e;
   _pwaInstallable   = true;
   _pwaShowBtn();
-  console.log('[PWA] beforeinstallprompt fired ✅');
+  console.log('[PWA] ✅ beforeinstallprompt tetiklendi — buton gösteriliyor');
 });
 
 window.addEventListener('appinstalled', function() {
@@ -8900,25 +8756,21 @@ window.addEventListener('appinstalled', function() {
   _pwaHideBtn();
   var t = translations[currentLang] || translations.tr;
   try { showSuccessMessage(t.pwa_installed || '✅ Uygulama yüklendi!'); } catch(e) {}
+  console.log('[PWA] ✅ Uygulama yüklendi');
 });
 
-// Sayfa yüklenince: zaten yüklü mü kontrol et
 window.addEventListener('load', function() {
-  // standalone modda açıldıysa zaten yüklü — butonu gösterme
   if (window.matchMedia('(display-mode: standalone)').matches ||
       window.navigator.standalone === true) {
     _pwaHideBtn();
-    console.log('[PWA] Running as installed app');
+    console.log('[PWA] Zaten yüklü uygulama olarak çalışıyor');
     return;
   }
-  // Yüklü değil — butonu HER ZAMAN göster (beforeinstallprompt gelmese bile)
-  // 2 saniye bekle, prompt gelmediyse yine de butonu göster
+  // beforeinstallprompt henüz gelmedi ama gelebilir — 2sn bekle
   setTimeout(function() {
     if (!_pwaInstallable) {
-      // Prompt gelmedi ama tarayıcı destekliyor olabilir; butonu göster
-      // tıklandığında adres çubuğu ikonuna yönlendiririz
       _pwaShowBtn();
-      console.log('[PWA] Showing install btn (no prompt yet — may appear later)');
+      console.log('[PWA] Buton gösteriliyor (prompt bekleniyor)');
     }
   }, 1500);
 });
@@ -8938,7 +8790,6 @@ function _pwaHideBtn() {
 
 function pwaTriggerInstall() {
   if (_pwaInstallPrompt) {
-    // ✅ Native install dialog — beforeinstallprompt geldi
     var btn = document.getElementById('pwa-install-btn');
     if (btn) { btn.innerHTML = '⏳'; btn.disabled = true; }
     _pwaInstallPrompt.prompt();
@@ -8953,44 +8804,36 @@ function pwaTriggerInstall() {
       _pwaInstallPrompt = null;
     });
   } else {
-    // Prompt yok — tarayıcıya göre talimat ver
-    var ua        = navigator.userAgent;
-    var isEdge    = /Edg\//.test(ua);
-    var isChrome  = /Chrome\//.test(ua) && !isEdge;
-    var isSafari  = /Safari\//.test(ua) && !isChrome && !isEdge;
-    var isFirefox = /Firefox\//.test(ua);
-    var isMobile  = /Android|iPhone|iPad/.test(ua);
+    var ua       = navigator.userAgent;
+    var isEdge   = /Edg\//.test(ua);
+    var isChrome = /Chrome\//.test(ua) && !isEdge;
+    var isSafari = /Safari\//.test(ua) && !isChrome && !isEdge;
+    var isMobile = /Android|iPhone|iPad/.test(ua);
     var t = translations[currentLang] || translations.tr;
     var msg;
-
     if (currentLang === 'en') {
       if (isMobile && isSafari)
         msg = '📱 To install on iPhone/iPad:\n1. Tap the Share button (□↑)\n2. Select "Add to Home Screen"\n3. Tap "Add"';
       else if (isMobile)
         msg = '📱 To install on Android:\n1. Tap the browser menu (⋮)\n2. Select "Add to Home Screen" or "Install App"';
       else if (isEdge)
-        msg = '💻 To install in Edge:\n1. Look for the ⊕ icon in the address bar (right side)\n2. Or go to Menu (…) → Apps → Install this site as an app';
-      else if (isChrome)
-        msg = '💻 To install in Chrome:\n1. Look for the ⊕ icon in the address bar (right)\n2. Or go to Menu (⋮) → Save and share → Install page as app\n\n💡 Tip: If you don\'t see the icon, the page may need a sw.js file in the same folder on your server.';
+        msg = '💻 To install in Edge:\n1. Look for the ⊕ icon in the address bar (right side)\n2. Or Menu (…) → Apps → Install this site as an app';
       else
-        msg = '💻 To install:\nLook for the install icon in your browser\'s address bar.';
+        msg = '💻 To install in Chrome:\n1. Look for the ⊕ icon in the address bar (right side)\n2. Or Menu (⋮) → Save and share → Install page as app';
     } else {
       if (isMobile && isSafari)
         msg = '📱 iPhone/iPad\'a yüklemek için:\n1. Paylaş butonuna (□↑) dokunun\n2. "Ana Ekrana Ekle"yi seçin\n3. "Ekle"ye dokunun';
       else if (isMobile)
         msg = '📱 Android\'e yüklemek için:\n1. Tarayıcı menüsüne (⋮) dokunun\n2. "Ana Ekrana Ekle" veya "Uygulama Yükle"yi seçin';
       else if (isEdge)
-        msg = '💻 Edge\'e yüklemek için:\n1. Adres çubuğunun sağındaki ⊕ ikonunu arayın\n2. Veya Menü (…) → Uygulamalar → Bu siteyi uygulama olarak yükle';
-      else if (isChrome)
-        msg = '💻 Chrome\'a yüklemek için:\n1. Adres çubuğunun sağındaki ⊕ ikonunu arayın\n2. Veya Menü (⋮) → Kaydet ve paylaş → Sayfayı uygulama olarak yükle\n\n💡 İpucu: İkon görünmüyorsa sunucunuzda aynı dizine sw.js dosyası eklenmelidir.';
+        msg = '💻 Edge\'e yüklemek için:\n1. Adres çubuğunun sağındaki ⊕ ikonuna tıklayın\n2. Veya Menü (…) → Uygulamalar → Bu siteyi uygulama olarak yükle';
       else
-        msg = '💻 Yüklemek için:\nTarayıcınızın adres çubuğundaki yükleme ikonuna tıklayın.';
+        msg = '💻 Chrome\'a yüklemek için:\n1. Adres çubuğunun sağındaki ⊕ ikonuna tıklayın\n2. Veya Menü (⋮) → Kaydet ve paylaş → Sayfayı uygulama olarak yükle';
     }
     _pwaShowInstallGuide(msg);
   }
 }
 
-// Install rehberi modal
 function _pwaShowInstallGuide(msg) {
   var existing = document.getElementById('pwa-guide-modal');
   if (existing) existing.remove();
