@@ -4306,17 +4306,17 @@ function loadData() {
     } else {
       // İlk kurulum - örnek veriler
       klasmanlar = [
-        { id: 1, ad: 'Pantolon', urunKontrolSuresi: 90, istasyonlar: [
+        { id: 1, ad: 'Pantolon', urunKontrolSuresi: 90, olcuSuresi: 0, urunKabulSuresi: 0, istasyonlar: [
           {id: 1, ad: 'Ölçü Kontrol', sure: 120},
           {id: 2, ad: 'Dikiş Kalitesi', sure: 180},
           {id: 3, ad: 'Son Kontrol', sure: 90}
         ]},
-        { id: 2, ad: 'Ceket', urunKontrolSuresi: 150, istasyonlar: [
+        { id: 2, ad: 'Ceket', urunKontrolSuresi: 150, olcuSuresi: 0, urunKabulSuresi: 0, istasyonlar: [
           {id: 1, ad: 'Yaka Kontrolü', sure: 240},
           {id: 2, ad: 'Düğme Test', sure: 120},
           {id: 3, ad: 'Astar Kontrolü', sure: 180}
         ]},
-        { id: 3, ad: 'Mont', urunKontrolSuresi: 120, istasyonlar: [
+        { id: 3, ad: 'Mont', urunKontrolSuresi: 120, olcuSuresi: 0, urunKabulSuresi: 0, istasyonlar: [
           {id: 1, ad: 'Ölçü Alma', sure: 180},
           {id: 2, ad: 'Fit Denemesi', sure: 360},
           {id: 3, ad: 'Pull Test', sure: 300}
@@ -5649,7 +5649,7 @@ function renderEditor(){
           ${iconGridHtml}
         </div>
       </div>
-      <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--lgreen);border:1px solid var(--green);border-radius:8px;margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--lgreen);border:1px solid var(--green);border-radius:8px;margin-bottom:8px">
         <div style="width:32px;height:32px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px">⏱</div>
         <div style="flex:1">
           <strong style="font-size:13px;color:var(--green);display:block" data-i18n="unit_check_duration">1-Unit Inspection Duration</strong>
@@ -5658,6 +5658,34 @@ function renderEditor(){
         <div style="display:flex;align-items:center;gap:6px">
           <input type="number" value="${urunKontrolSuresi}" min="0" step="1" 
             onchange="updateUrunKontrol(${k.id},this.value)" style="width:80px;text-align:right;padding:6px 8px;border:1px solid var(--border);border-radius:6px">
+          <span style="font-size:12px;color:var(--muted);white-space:nowrap">saniye</span>
+        </div>
+      </div>
+
+      <!-- Ölçü -->
+      <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--lamber);border:1px solid var(--amber);border-radius:8px;margin-bottom:8px">
+        <div style="width:32px;height:32px;border-radius:50%;background:var(--amber);display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px">📐</div>
+        <div style="flex:1">
+          <strong style="font-size:13px;color:var(--amber);display:block">Ölçü Süresi</strong>
+          <span style="font-size:11px;color:var(--muted2)">Adet başına ölçüm süresi — BakilacakMiktar'a göre ölçülecek adet × bu süre eklenir</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <input type="number" value="${parseFloat(k.olcuSuresi)||0}" min="0" step="1"
+            onchange="updateOlcuSuresi(${k.id},this.value)" style="width:80px;text-align:right;padding:6px 8px;border:1px solid var(--border);border-radius:6px">
+          <span style="font-size:12px;color:var(--muted);white-space:nowrap">saniye</span>
+        </div>
+      </div>
+
+      <!-- Ürün Kabul -->
+      <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--lblue3);border:1px solid var(--blue3);border-radius:8px;margin-bottom:16px">
+        <div style="width:32px;height:32px;border-radius:50%;background:var(--blue3);display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px">✅</div>
+        <div style="flex:1">
+          <strong style="font-size:13px;color:var(--blue);display:block">Ürün Kabul Süresi</strong>
+          <span style="font-size:11px;color:var(--muted2)">Parti başına sabit ek süre — miktar arttıkça kademeli artar (1-32→1x, 33-80→2x, 81-125→3x, 125+→4x)</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <input type="number" value="${parseFloat(k.urunKabulSuresi)||0}" min="0" step="1"
+            onchange="updateUrunKabulSuresi(${k.id},this.value)" style="width:80px;text-align:right;padding:6px 8px;border:1px solid var(--border);border-radius:6px">
           <span style="font-size:12px;color:var(--muted);white-space:nowrap">saniye</span>
         </div>
       </div>
@@ -5712,6 +5740,24 @@ function updateUrunKontrol(kId, val) {
   k.urunKontrolSuresi = parseFloat(val) || 0;
   autoSaveAndPushKlasmanlar();
   renderEditor(); 
+  renderListe();
+}
+
+function updateOlcuSuresi(kId, val) {
+  const k = klasmanlar.find(x => x.id === kId);
+  if (!k) return;
+  k.olcuSuresi = parseFloat(val) || 0;
+  autoSaveAndPushKlasmanlar();
+  renderEditor();
+  renderListe();
+}
+
+function updateUrunKabulSuresi(kId, val) {
+  const k = klasmanlar.find(x => x.id === kId);
+  if (!k) return;
+  k.urunKabulSuresi = parseFloat(val) || 0;
+  autoSaveAndPushKlasmanlar();
+  renderEditor();
   renderListe();
 }
 
@@ -5826,7 +5872,7 @@ function addKlasman(){
   const ad=document.getElementById('modal-input').value.trim();
   if(!ad) return;
   const icon = document.getElementById('modal-icon-val')?.value || '👔';
-  const yeni={id:nextId++, ad, icon, urunKontrolSuresi: 60, istasyonlar:[]};
+  const yeni={id:nextId++, ad, icon, urunKontrolSuresi: 60, olcuSuresi: 0, urunKabulSuresi: 0, istasyonlar:[]};
   klasmanlar.push(yeni);
   closeModal();
   secilenId=yeni.id;
@@ -6276,12 +6322,31 @@ function performansHesapla(){
   }
 
   // Klasman mapping hazırla
+  // Ölçü tablosu: BakilacakMiktar → ölçülecek adet
+  function getOlcuAdet(adet) {
+    if (adet <= 32)  return 6;
+    if (adet <= 50)  return 9;
+    if (adet <= 80)  return 12;
+    if (adet <= 125) return 15;
+    return 18;
+  }
+
+  // Ürün Kabul katsayısı: BakilacakMiktar → kaç kat
+  function getUrunKabulKat(adet) {
+    if (adet <= 32)  return 1;
+    if (adet <= 80)  return 2;
+    if (adet <= 125) return 3;
+    return 4;
+  }
+
   function normalize(str) { return String(str).toLowerCase().trim().replace(/[^\w]/g,''); }
   const klasmanMap = {};
   klasmanlar.forEach(k => {
     const normalKey = normalize(k.ad);
     klasmanMap[normalKey] = {
       urunKontrolSuresi: parseFloat(k.urunKontrolSuresi) || 0,
+      olcuSuresi: parseFloat(k.olcuSuresi) || 0,
+      urunKabulSuresi: parseFloat(k.urunKabulSuresi) || 0,
       istasyonSuresi: k.istasyonlar.reduce((s,i)=>s+(parseFloat(i.sure)||0),0),
       istasyonDetay: k.istasyonlar.map(i => ({ ad: i.ad, sure: parseFloat(i.sure)||0 }))
     };
@@ -6355,8 +6420,12 @@ function performansHesapla(){
       tarihHataliKayitlar++;
     }
 
-    // Standart süre = (1 adet kontrol süresi × adet) + sabit istasyon süresi
-    const standartSure = (klasmanInfo.urunKontrolSuresi * adet) + klasmanInfo.istasyonSuresi;
+    // Standart süre = (1 adet kontrol süresi × adet) + ölçü süresi + ürün kabul süresi + sabit istasyon süresi
+    const olcuAdet = getOlcuAdet(adet);
+    const urunKabulKat = getUrunKabulKat(adet);
+    const olcuEk = olcuAdet * (klasmanInfo.olcuSuresi || 0);
+    const urunKabulEk = urunKabulKat * (klasmanInfo.urunKabulSuresi || 0);
+    const standartSure = (klasmanInfo.urunKontrolSuresi * adet) + olcuEk + urunKabulEk + klasmanInfo.istasyonSuresi;
 
     // Bu kaydın fiili süresi = başlangıç-bitiş farkı (mola düşümlü)
     const kayitFiiliSure = tarihGecerli
