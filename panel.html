@@ -6681,12 +6681,20 @@ function performansHesapla(){
       tarihHataliKayitlar++;
     }
 
-    // Standart süre = (1 adet kontrol süresi × adet) + ölçü süresi + ürün kabul süresi + sabit istasyon süresi
-    const olcuAdet = getOlcuAdet(adet);
-    const urunKabulKat = getUrunKabulKat(adet);
-    const olcuEk = olcuAdet * (klasmanInfo.olcuSuresi || 0);
-    const urunKabulEk = urunKabulKat * (klasmanInfo.urunKabulSuresi || 0);
-    const standartSure = (klasmanInfo.urunKontrolSuresi * adet) + olcuEk + urunKabulEk + klasmanInfo.istasyonSuresi;
+    // Standart süre hesaplama:
+    // Adet > 10 ise: (kontrol süresi × adet) + ölçü eki + ürün kabul eki + istasyon süresi
+    // Adet ≤ 10 ise: sadece (kontrol süresi × adet) — sabit süreler dahil edilmez
+    let standartSure;
+    if (adet > 10) {
+      const olcuAdet = getOlcuAdet(adet);
+      const urunKabulKat = getUrunKabulKat(adet);
+      const olcuEk = olcuAdet * (klasmanInfo.olcuSuresi || 0);
+      const urunKabulEk = urunKabulKat * (klasmanInfo.urunKabulSuresi || 0);
+      standartSure = (klasmanInfo.urunKontrolSuresi * adet) + olcuEk + urunKabulEk + klasmanInfo.istasyonSuresi;
+    } else {
+      // 10 adet ve altı: yalnızca kontrol süresi × adet
+      standartSure = klasmanInfo.urunKontrolSuresi * adet;
+    }
 
     // Bu kaydın fiili süresi = başlangıç-bitiş farkı (mola düşümlü)
     const kayitFiiliSure = tarihGecerli
