@@ -8463,6 +8463,68 @@ async function pullKlasmanAnalizFromSheets() {
     </div>
     <div style="display:flex;gap:10px;align-items:center;">
       <button id="ao-refresh-btn" onclick="aoRefreshSheetsData()" style="padding:7px 14px;background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:8px;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:6px;transition:background .15s;" onmouseover="this.style.background='rgba(255,255,255,.22)'" onmouseout="this.style.background='rgba(255,255,255,.12)'">🔄 Veri Çek</button>
+     <div style="position:relative;">
+  <button id="ot-popup-btn" onclick="toggleOtPopup()" style="padding:7px 14px;background:rgba(232,93,47,0.85);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:8px;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:6px;transition:background .15s;" onmouseover="this.style.background='#D85A30'" onmouseout="this.style.background='rgba(232,93,47,0.85)'">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/><path d="M12 2v2M2 12h2M12 22v-2M22 12h-2" stroke-width="1.5" opacity=".5"/></svg>
+    Overtime
+    <span id="ot-popup-chevron" style="font-size:10px;transition:transform .3s;">▶</span>
+  </button>
+
+  <div id="ot-popup-card" style="display:none;position:absolute;top:calc(100% + 8px);right:0;width:300px;background:#fff;border:0.5px solid #e5e7eb;border-radius:12px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.15);z-index:200;animation:otSlideIn .3s cubic-bezier(.4,0,.2,1);">
+    <!-- Header -->
+    <div style="background:#D85A30;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;">
+      <div style="display:flex;align-items:center;gap:8px;color:#fff;font-size:13px;font-weight:500;font-family:'DM Sans',sans-serif;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Overtime Özeti
+      </div>
+      <button onclick="toggleOtPopup()" style="background:rgba(255,255,255,.18);border:none;color:#fff;border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;">✕</button>
+    </div>
+    <!-- Body -->
+    <div style="padding:14px;display:flex;flex-direction:column;gap:10px;background:#f8f9fa;">
+      <!-- Overtime Toplam Süresi -->
+      <div style="background:#fff;border-radius:8px;border:0.5px solid #e5e7eb;padding:11px 14px;display:flex;align-items:center;justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:34px;height:34px;border-radius:8px;background:#FAECE7;display:flex;align-items:center;justify-content:center;color:#993C1D;font-size:17px;">⏰</div>
+          <div>
+            <div style="font-size:11px;color:#6b7280;display:block;margin-bottom:2px;">Overtime toplam süresi</div>
+            <div id="ot-sure-val" style="font-size:18px;font-weight:500;color:#111827;display:block;line-height:1;">—</div>
+          </div>
+        </div>
+        <span id="ot-sure-badge" style="font-size:11px;font-weight:500;padding:3px 9px;border-radius:99px;background:#FAECE7;color:#712B13;">—</span>
+      </div>
+      <!-- OT'de Kontrol Edilen Adet -->
+      <div style="background:#fff;border-radius:8px;border:0.5px solid #e5e7eb;padding:11px 14px;display:flex;align-items:center;justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:34px;height:34px;border-radius:8px;background:#eff6ff;display:flex;align-items:center;justify-content:center;color:#1d4ed8;font-size:17px;">📦</div>
+          <div>
+            <div style="font-size:11px;color:#6b7280;display:block;margin-bottom:2px;">OT'de kontrol edilen adet</div>
+            <div id="ot-adet-val" style="font-size:18px;font-weight:500;color:#111827;display:block;line-height:1;">—</div>
+          </div>
+        </div>
+        <span id="ot-adet-badge" style="font-size:11px;font-weight:500;padding:3px 9px;border-radius:99px;background:#eff6ff;color:#1e40af;">—</span>
+      </div>
+      <!-- Verimlilik Oranı -->
+      <div style="background:#fff;border-radius:8px;border:0.5px solid #e5e7eb;padding:11px 14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:34px;height:34px;border-radius:8px;background:#FAECE7;display:flex;align-items:center;justify-content:center;color:#993C1D;font-size:17px;">📊</div>
+            <div>
+              <div style="font-size:11px;color:#6b7280;display:block;margin-bottom:2px;">Overtime verimlilik oranı</div>
+              <div id="ot-verim-val" style="font-size:18px;font-weight:500;color:#D85A30;display:block;line-height:1;">—</div>
+            </div>
+          </div>
+        </div>
+        <div style="height:6px;background:#f3f4f6;border-radius:99px;overflow:hidden;">
+          <div id="ot-verim-bar" style="height:100%;border-radius:99px;background:#D85A30;width:0;transition:width .7s cubic-bezier(.4,0,.2,1) .1s;"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:5px;">
+          <span id="ot-label-mesai" style="font-size:10px;color:#9ca3af;">Mesai: —</span>
+          <span id="ot-label-std" style="font-size:10px;color:#9ca3af;">Standart: —</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
       <button onclick="window.print()" style="padding:7px 14px;background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:8px;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;" data-i18n="print_btn">🖨️ Print</button>
       <button onclick="exportInspectorDetailFromOverlay()" style="padding:7px 14px;background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:8px;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;">📊 Excel</button>
     </div>
@@ -8664,6 +8726,10 @@ async function pullKlasmanAnalizFromSheets() {
 @keyframes ao-gspin { to { transform: rotate(360deg); } }
 @media print {
   #analiz-overlay .no-print, #analiz-overlay-header button, #ao-gemini-wrap { display: none !important; }
+}
+  @keyframes otSlideIn {
+  from { opacity:0; transform:translateY(-8px); }
+  to   { opacity:1; transform:translateY(0); }
 }
 </style>
 
@@ -9486,6 +9552,70 @@ function _pwaShowInstallGuide(msg) {
 }
 
 // ─── END PWA ─────────────────────────────────────────────────────────────────
+  function toggleOtPopup() {
+  var card    = document.getElementById('ot-popup-card');
+  var chevron = document.getElementById('ot-popup-chevron');
+  var isOpen  = card.style.display !== 'none';
+
+  if (isOpen) {
+    card.style.display = 'none';
+    chevron.style.transform = 'rotate(0deg)';
+    return;
+  }
+
+  // Veriyi hesapla
+  var insp = selectedInspectorDetail;
+  if (!insp) { card.style.display = 'block'; return; }
+
+  var otSn    = insp.toplamMesaistiSaniye || 0;
+  var mesaiSn = insp.mesaiSure || 0;
+  var stdSn   = insp.standartSure || 0;
+  var totalAdet = insp.adet || 0;
+
+  // OT süresini formatla
+  function fmtSn(sn) {
+    if (!sn || sn <= 0) return '—';
+    var s = Math.round(sn), h = Math.floor(s/3600), m = Math.floor((s%3600)/60);
+    return h > 0 ? h+'s '+String(m).padStart(2,'0')+'d' : m+'d';
+  }
+
+  // OT'de kontrol edilen adet (OT oranı × toplam adet)
+  var otOran  = mesaiSn > 0 ? otSn / mesaiSn : 0;
+  var otAdet  = Math.round(totalAdet * otOran);
+  var otAdetPct = mesaiSn > 0 ? Math.round(otOran * 100) : 0;
+
+  // Verimlilik = standart / mesai × 100
+  var verim = mesaiSn > 0 ? Math.round((stdSn / mesaiSn) * 100) : 0;
+  var otDk  = Math.round(otSn / 60);
+
+  document.getElementById('ot-sure-val').textContent   = fmtSn(otSn);
+  document.getElementById('ot-sure-badge').textContent  = otDk > 0 ? '+' + otDk + ' dk' : '—';
+  document.getElementById('ot-adet-val').textContent   = otAdet > 0 ? otAdet.toLocaleString('tr-TR') + ' adet' : '—';
+  document.getElementById('ot-adet-badge').textContent  = otAdetPct > 0 ? '%' + otAdetPct : '—';
+  document.getElementById('ot-verim-val').textContent  = verim > 0 ? '%' + verim : '—';
+  document.getElementById('ot-label-mesai').textContent = 'Mesai: ' + fmtSn(mesaiSn);
+  document.getElementById('ot-label-std').textContent   = 'Standart: ' + fmtSn(stdSn);
+
+  // Bar animasyonu
+  var barEl = document.getElementById('ot-verim-bar');
+  barEl.style.width = '0';
+  setTimeout(function() { barEl.style.width = Math.min(verim, 100) + '%'; }, 50);
+
+  card.style.display = 'block';
+  chevron.style.transform = 'rotate(90deg)';
+
+  // Dışarı tıklayınca kapat
+  setTimeout(function() {
+    document.addEventListener('click', function closeOt(e) {
+      if (!document.getElementById('ot-popup-card').contains(e.target) &&
+          !document.getElementById('ot-popup-btn').contains(e.target)) {
+        card.style.display = 'none';
+        chevron.style.transform = 'rotate(0deg)';
+        document.removeEventListener('click', closeOt);
+      }
+    });
+  }, 10);
+}
 </script>
 </body>
 </html>
