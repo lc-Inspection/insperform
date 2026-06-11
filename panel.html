@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -438,18 +437,17 @@ label { font-size: 12px; font-weight: 500; color: var(--muted); display: block; 
 .save-success.show { transform: translateX(0); }
 
 /* ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
-/* ─── SLIDESHOW STYLES — TV / KURUMSAL EKRAN OPTİMİZASYONU ─── */
+/* ─── SLIDESHOW STYLES — TV / KURUMSAL EKRAN OPTİMİZASYONU — PROFESYONEL TASARIM ─── */
 /* ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
 
 /* ─── ANA CONTAINER ─── */
 .slideshow-container {
-  background: linear-gradient(160deg, #071830 0%, #0A2248 35%, #0D2D5A 65%, #071830 100%);
-  border-radius: var(--r);
-  min-height: 720px;
+  background: #030d1a;
+  border-radius: 16px;
+  min-height: 740px;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 12px 60px rgba(7,24,48,.7), 0 0 0 1px rgba(33,150,243,.15);
-  border: 1px solid rgba(255,255,255,.07);
+  box-shadow: 0 0 0 1px rgba(255,255,255,.06), 0 24px 80px rgba(0,0,0,.7);
   display: flex;
 }
 
@@ -462,122 +460,128 @@ label { font-size: 12px; font-weight: 500; color: var(--muted); display: block; 
   z-index: 9999 !important;
 }
 
-/* Arka plan geometrik desen — TV için daha belirgin */
+/* Canlı arka plan — üçgen/hex ızgara + gradient ışımalar */
 .slideshow-container::before {
   content: '';
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse at 5% 95%, rgba(33,150,243,.10) 0%, transparent 50%),
-    radial-gradient(ellipse at 95% 5%, rgba(100,181,246,.08) 0%, transparent 45%),
-    radial-gradient(ellipse at 50% 50%, rgba(21,101,192,.05) 0%, transparent 70%),
-    linear-gradient(180deg, rgba(255,255,255,.025) 0%, transparent 100%);
+    radial-gradient(ellipse 80% 60% at 15% 85%, rgba(21,101,192,.18) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 88% 10%, rgba(66,165,245,.12) 0%, transparent 55%),
+    radial-gradient(ellipse 40% 40% at 50% 50%, rgba(13,31,64,.8) 0%, transparent 80%);
   pointer-events: none;
   z-index: 0;
 }
 
-/* İnce ızgara deseni */
+/* Nokta ızgara desen */
 .slideshow-container::after {
   content: '';
   position: absolute;
   inset: 0;
-  background-image:
-    linear-gradient(rgba(33,150,243,.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(33,150,243,.03) 1px, transparent 1px);
-  background-size: 60px 60px;
+  background-image: radial-gradient(rgba(33,150,243,.07) 1px, transparent 1px);
+  background-size: 40px 40px;
   pointer-events: none;
   z-index: 0;
 }
 
-/* ─── SOL PANEL ─── */
+/* ─── SOL PANEL — SKOR TABLOSU ─── */
 .slideshow-sidebar {
-  width: 340px;
-  background: rgba(0,0,0,.45);
-  backdrop-filter: blur(20px);
-  border-right: 1px solid rgba(255,255,255,.07);
-  padding: 28px 20px;
+  width: 320px;
+  background: rgba(3,13,26,.75);
+  backdrop-filter: blur(24px);
+  border-right: 1px solid rgba(255,255,255,.06);
+  padding: 0;
   overflow-y: auto;
   flex-shrink: 0;
   z-index: 2;
+  display: flex;
+  flex-direction: column;
 }
 
 .sidebar-header {
-  text-align: center;
-  margin-bottom: 24px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid rgba(255,255,255,.08);
+  padding: 24px 22px 18px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  background: linear-gradient(135deg, rgba(255,215,0,.06) 0%, transparent 70%);
 }
 
 .sidebar-title {
-  font-size: 16px;
+  font-size: 11px;
   font-weight: 800;
   color: #FFD700;
-  letter-spacing: 2px;
+  letter-spacing: 3px;
   text-transform: uppercase;
-  margin-bottom: 5px;
+  margin-bottom: 4px;
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 8px;
-  text-shadow: 0 0 20px rgba(255,215,0,.4);
 }
 
 .sidebar-subtitle {
-  font-size: 12px;
-  color: rgba(255,255,255,.4);
+  font-size: 10px;
+  color: rgba(255,255,255,.3);
   text-transform: uppercase;
-  letter-spacing: 1.2px;
+  letter-spacing: 1.5px;
+  font-weight: 600;
 }
 
+/* Top 5 Kart */
 .top-inspector-card {
-  background: rgba(255,255,255,.06);
-  border-radius: 12px;
-  padding: 16px 18px;
-  margin-bottom: 12px;
-  border: 1px solid rgba(255,255,255,.08);
-  transition: all .2s;
+  padding: 14px 22px;
+  border-bottom: 1px solid rgba(255,255,255,.04);
+  transition: background .18s;
   position: relative;
-  overflow: hidden;
   cursor: pointer;
 }
+.top-inspector-card:hover { background: rgba(255,255,255,.04); }
+.top-inspector-card.rank-1-card { background: linear-gradient(90deg, rgba(255,215,0,.06) 0%, transparent 80%); }
+.top-inspector-card.rank-2-card { background: linear-gradient(90deg, rgba(192,192,192,.04) 0%, transparent 80%); }
+.top-inspector-card.rank-3-card { background: linear-gradient(90deg, rgba(205,127,50,.04) 0%, transparent 80%); }
+
+/* Sol renkli çizgi */
 .top-inspector-card::before {
   content: '';
   position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #FFD700, #FFA000);
-  border-radius: 12px 12px 0 0;
+  left: 0; top: 8px; bottom: 8px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: rgba(255,255,255,.1);
 }
-.top-inspector-card:nth-child(2)::before { background: linear-gradient(90deg,#C0C0C0,#9E9E9E); }
-.top-inspector-card:nth-child(3)::before { background: linear-gradient(90deg,#CD7F32,#8D6E63); }
-.top-inspector-card:hover { background: rgba(255,255,255,.11); transform: translateX(4px); }
+.top-inspector-card.rank-1-card::before { background: linear-gradient(180deg, #FFD700, #FFA000); }
+.top-inspector-card.rank-2-card::before { background: linear-gradient(180deg, #C0C0C0, #9E9E9E); }
+.top-inspector-card.rank-3-card::before { background: linear-gradient(180deg, #CD7F32, #8D6E63); }
 
 .top-inspector-rank {
-  position: absolute; top: 12px; right: 12px;
-  width: 32px; height: 32px;
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 15px; font-weight: 800;
+  width: 26px; height: 26px;
+  border-radius: 6px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 800;
+  margin-right: 10px; flex-shrink: 0;
 }
-.rank-1 { background: linear-gradient(135deg,#FFD700,#FFA000); color:#000; box-shadow: 0 0 14px rgba(255,215,0,.5); }
-.rank-2 { background: linear-gradient(135deg,#C0C0C0,#9E9E9E); color:#000; }
-.rank-3 { background: linear-gradient(135deg,#CD7F32,#8D6E63); color:#fff; }
-.rank-other { background: rgba(255,255,255,.15); color:#fff; font-size:13px; }
+.rank-1 { background: linear-gradient(135deg,#FFD700,#E65100); color:#000; }
+.rank-2 { background: linear-gradient(135deg,#C0C0C0,#757575); color:#111; }
+.rank-3 { background: linear-gradient(135deg,#CD7F32,#5D4037); color:#fff; }
+.rank-other { background: rgba(255,255,255,.08); color:rgba(255,255,255,.5); font-size:11px; }
 
-.top-inspector-info { padding-right: 42px; }
-.top-inspector-name { font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 4px; letter-spacing: -.2px; }
-.top-inspector-performance { font-size: 26px; font-weight: 800; font-family:'DM Mono',monospace; margin-bottom: 5px; line-height: 1; }
-.top-inspector-details { font-size: 12px; color: rgba(255,255,255,.5); line-height: 1.6; }
+.top-inspector-info { display: flex; align-items: center; gap: 0; }
+.top-inspector-info-text { flex: 1; }
+.top-inspector-name { font-size: 13px; font-weight: 700; color: rgba(255,255,255,.92); margin-bottom: 2px; letter-spacing: -.1px; }
+.top-inspector-details { font-size: 10px; color: rgba(255,255,255,.35); line-height: 1.5; }
+.top-inspector-performance {
+  font-size: 22px; font-weight: 800;
+  font-family:'DM Mono',monospace;
+  line-height: 1;
+  min-width: 64px; text-align: right;
+}
 
 .top-inspector-badge {
-  display: inline-block; font-size: 9px; padding: 3px 8px;
-  border-radius: 9px; margin-right: 3px; font-weight: 700;
-  text-transform: uppercase; letter-spacing: .5px;
+  display: inline-block; font-size: 8px; padding: 2px 6px;
+  border-radius: 4px; margin-right: 3px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .4px;
 }
-.badge-excellent { background: #00897B; color:#fff; }
-.badge-good { background: #1565C0; color:#fff; }
-.badge-average { background: #E65100; color:#fff; }
-.badge-poor { background: #B71C1C; color:#fff; }
+.badge-excellent { background: rgba(0,137,123,.3); color:#4DB6AC; border: 1px solid rgba(0,137,123,.3); }
+.badge-good      { background: rgba(21,101,192,.3); color:#90CAF9; border: 1px solid rgba(33,150,243,.25); }
+.badge-average   { background: rgba(230,81,0,.3);   color:#FFB74D; border: 1px solid rgba(255,152,0,.25); }
+.badge-poor      { background: rgba(183,28,28,.3);  color:#EF9A9A; border: 1px solid rgba(198,40,40,.25); }
 
 /* ─── MAIN WRAPPER ─── */
 .slideshow-main-wrapper {
@@ -586,6 +590,7 @@ label { font-size: 12px; font-weight: 500; color: var(--muted); display: block; 
   flex-direction: column;
   position: relative;
   z-index: 2;
+  min-width: 0;
 }
 
 /* ─── HEADER ─── */
@@ -593,48 +598,65 @@ label { font-size: 12px; font-weight: 500; color: var(--muted); display: block; 
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 36px;
-  background: rgba(0,0,0,.35);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(255,255,255,.07);
+  padding: 18px 40px;
+  border-bottom: 1px solid rgba(255,255,255,.05);
 }
 
-.slideshow-logo { display: flex; align-items: center; gap: 18px; }
+.slideshow-logo { display: flex; align-items: center; gap: 16px; }
 .slideshow-logo-icon {
-  width: 54px; height: 54px;
-  background: linear-gradient(135deg, #1565C0, #2196F3);
-  border-radius: 13px;
+  width: 48px; height: 48px;
+  background: linear-gradient(135deg, #1565C0 0%, #42A5F5 100%);
+  border-radius: 12px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 20px; font-weight: 800; color: #fff;
-  box-shadow: 0 6px 24px rgba(33,150,243,.5);
+  font-size: 18px; font-weight: 800; color: #fff;
+  box-shadow: 0 4px 20px rgba(33,150,243,.4);
   letter-spacing: -.5px;
+  flex-shrink: 0;
 }
-.slideshow-logo-text div:first-child { font-size: 22px; font-weight: 800; color: #fff; line-height: 1; letter-spacing: -.3px; }
-.slideshow-logo-text div:last-child { font-size: 13px; color: rgba(255,255,255,.5); font-weight: 500; margin-top: 3px; letter-spacing: .3px; text-transform: uppercase; }
+.slideshow-logo-text div:first-child {
+  font-size: 20px; font-weight: 800; color: #fff;
+  line-height: 1.1; letter-spacing: -.4px;
+}
+.slideshow-logo-text div:last-child {
+  font-size: 10px; color: rgba(255,255,255,.35);
+  font-weight: 600; margin-top: 2px;
+  letter-spacing: 2px; text-transform: uppercase;
+}
 
-.slideshow-stats { display: flex; gap: 36px; align-items: center; }
-.slideshow-stat { text-align: center; padding: 0 20px; border-left: 1px solid rgba(255,255,255,.08); }
+.slideshow-stats { display: flex; align-items: stretch; gap: 0; }
+.slideshow-stat {
+  text-align: center; padding: 6px 28px;
+  border-left: 1px solid rgba(255,255,255,.06);
+  display: flex; flex-direction: column; justify-content: center;
+}
 .slideshow-stat:first-child { border-left: none; }
-.slideshow-stat-value { font-size: 32px; font-weight: 800; color: #fff; font-family:'DM Mono',monospace; line-height: 1; }
-.slideshow-stat-label { font-size: 11px; color: rgba(255,255,255,.45); text-transform: uppercase; letter-spacing: 1px; font-weight: 700; margin-top: 4px; }
+.slideshow-stat-value {
+  font-size: 28px; font-weight: 800; color: #fff;
+  font-family:'DM Mono',monospace; line-height: 1; letter-spacing: -.5px;
+}
+.slideshow-stat-label {
+  font-size: 9px; color: rgba(255,255,255,.3);
+  text-transform: uppercase; letter-spacing: 1.5px;
+  font-weight: 700; margin-top: 5px;
+}
 
-/* ─── ANNOUNCEMENTS ─── */
+/* ─── TICKER / DUYURU ŞERIDI ─── */
 .slideshow-announcements {
-  background: linear-gradient(90deg, #0A2248, #1565C0, #0A2248);
-  background-size: 200% 100%;
-  padding: 13px 36px;
-  border-bottom: 1px solid rgba(255,255,255,.06);
-  animation: shiftGrad 8s linear infinite;
+  background: rgba(21,101,192,.15);
+  border-top: 1px solid rgba(33,150,243,.15);
+  border-bottom: 1px solid rgba(33,150,243,.12);
+  padding: 10px 40px;
+  overflow: hidden;
 }
 .announcement-item {
-  display: flex; align-items: center; gap: 12px;
-  color: rgba(255,255,255,.95); font-size: 16px; font-weight: 700;
-  letter-spacing: .2px;
+  display: flex; align-items: center; gap: 14px;
+  color: rgba(255,255,255,.9); font-size: 14px; font-weight: 600;
+  letter-spacing: .3px;
 }
-.announcement-icon { font-size: 20px; animation: bounce 2s infinite; }
-@keyframes bounce { 0%,100%{transform:translateY(0)} 40%{transform:translateY(-4px)} 60%{transform:translateY(-2px)} }
-@keyframes slideInAnnouncement { from{transform:translateX(-100%);opacity:0} to{transform:none;opacity:1} }
-.announcement-item { animation: slideInAnnouncement .5s ease; }
+.announcement-icon { font-size: 18px; flex-shrink: 0; animation: bounce 2.5s ease-in-out infinite; }
+@keyframes bounce { 0%,100%{transform:translateY(0)} 45%{transform:translateY(-5px)} 65%{transform:translateY(-2px)} }
+@keyframes slideInAnnouncement { from{opacity:0;transform:translateX(-20px)} to{opacity:1;transform:none} }
+.announcement-item { animation: slideInAnnouncement .4s ease; }
 
 /* ─── MAIN SLIDE AREA ─── */
 .slideshow-main {
@@ -651,164 +673,248 @@ label { font-size: 12px; font-weight: 500; color: var(--muted); display: block; 
 .slideshow-welcome {
   text-align: center;
   color: #fff;
-  padding: 48px;
-  max-width: 780px;
+  padding: 60px 48px;
+  max-width: 820px;
 }
-.welcome-icon { font-size: 72px; margin-bottom: 24px; }
-.slideshow-welcome h2 { font-size: 40px; font-weight: 800; margin-bottom: 14px; color: #fff; letter-spacing: -.5px; }
-.slideshow-welcome p { font-size: 18px; color: rgba(255,255,255,.55); margin-bottom: 36px; }
-.welcome-stats { display: flex; justify-content: center; gap: 60px; margin-bottom: 36px; }
+.welcome-icon { font-size: 64px; margin-bottom: 28px; line-height: 1; display: block; }
+.slideshow-welcome h2 {
+  font-size: 42px; font-weight: 800; margin-bottom: 12px; color: #fff;
+  letter-spacing: -1px; line-height: 1.1;
+}
+.slideshow-welcome p { font-size: 16px; color: rgba(255,255,255,.4); margin-bottom: 48px; letter-spacing: .2px; }
+.welcome-stats {
+  display: flex; justify-content: center; gap: 80px; margin-bottom: 48px;
+  padding: 32px; background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.06); border-radius: 20px;
+}
 .welcome-stat { text-align: center; }
-.welcome-stat-value { font-size: 48px; font-weight: 800; color: #42A5F5; font-family:'DM Mono',monospace; line-height:1; }
-.welcome-stat-label { font-size: 14px; color: rgba(255,255,255,.5); margin-top: 8px; text-transform: uppercase; letter-spacing: .8px; font-weight: 600; }
-.welcome-start-btn {
-  background: linear-gradient(135deg, #1565C0, #2196F3);
-  color: #fff; border: none; padding: 18px 48px;
-  border-radius: 12px; font-size: 18px; font-weight: 700;
-  cursor: pointer; transition: all .2s;
-  box-shadow: 0 6px 28px rgba(33,150,243,.45);
-  letter-spacing: .3px;
+.welcome-stat-value {
+  font-size: 56px; font-weight: 800; color: #42A5F5;
+  font-family:'DM Mono',monospace; line-height:1; letter-spacing: -2px;
 }
-.welcome-start-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 36px rgba(33,150,243,.6); }
+.welcome-stat-label {
+  font-size: 11px; color: rgba(255,255,255,.35); margin-top: 10px;
+  text-transform: uppercase; letter-spacing: 2px; font-weight: 700;
+}
+.welcome-start-btn {
+  background: linear-gradient(135deg, #1565C0 0%, #42A5F5 100%);
+  color: #fff; border: none; padding: 18px 56px;
+  border-radius: 14px; font-size: 16px; font-weight: 700;
+  cursor: pointer; transition: all .22s;
+  box-shadow: 0 8px 32px rgba(33,150,243,.4);
+  letter-spacing: .5px; text-transform: uppercase;
+  font-family: 'DM Sans', sans-serif;
+}
+.welcome-start-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 44px rgba(33,150,243,.6);
+}
 
 /* ─── INSPECTOR SLIDE ─── */
 .inspector-slide {
   display: none;
-  padding: 36px 52px;
+  padding: 32px 48px 28px;
   color: #fff;
   width: 100%;
-  animation-duration: .6s;
+  animation-duration: .55s;
   animation-fill-mode: both;
 }
 .inspector-slide.active { display: block; }
 
-.inspector-slide-header { margin-bottom: 28px; border-bottom: 1px solid rgba(255,255,255,.07); padding-bottom: 18px; }
-.inspector-slide-title { font-size: 16px; font-weight: 800; color: rgba(255,255,255,.5); text-transform: uppercase; letter-spacing: 2px; }
-.inspector-slide-subtitle { font-size: 13px; color: rgba(255,255,255,.3); margin-top: 4px; }
+.inspector-slide-header {
+  margin-bottom: 24px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.inspector-slide-title {
+  font-size: 10px; font-weight: 800;
+  color: rgba(255,255,255,.3); text-transform: uppercase; letter-spacing: 3px;
+}
+.inspector-slide-subtitle { font-size: 11px; color: rgba(255,255,255,.2); margin-top: 3px; letter-spacing: .5px; }
+
+/* Slide progress indicator */
+.slide-progress-dots { display: flex; gap: 5px; align-items: center; }
+.slide-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,.15); transition: all .3s; }
+.slide-dot.active { background: #42A5F5; width: 18px; border-radius: 3px; }
 
 .inspector-slide-main {
   display: grid;
-  grid-template-columns: 260px 1fr 240px;
-  gap: 44px;
+  grid-template-columns: 220px 1fr 220px;
+  gap: 36px;
   align-items: center;
-  max-width: 1200px;
-  margin: 0 auto;
 }
 
 /* Avatar */
 .inspector-slide-avatar { text-align: center; }
 .inspector-slide-avatar-circle {
-  width: 140px; height: 140px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #1565C0, #42A5F5);
+  width: 120px; height: 120px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #0D2B5E 0%, #1565C0 50%, #2196F3 100%);
   display: flex; align-items: center; justify-content: center;
-  font-size: 46px; font-weight: 800; color: #fff;
-  margin: 0 auto 16px;
-  box-shadow: 0 10px 40px rgba(33,150,243,.45), 0 0 0 4px rgba(255,255,255,.08);
-  border: 4px solid rgba(255,255,255,.15);
+  font-size: 40px; font-weight: 800; color: #fff;
+  margin: 0 auto 14px;
+  box-shadow: 0 12px 40px rgba(33,150,243,.35), 0 0 0 1px rgba(255,255,255,.08);
+  letter-spacing: -1px;
 }
-.inspector-slide-name { font-size: 28px; font-weight: 800; color: #fff; margin-bottom: 8px; letter-spacing: -.4px; }
+.inspector-slide-name {
+  font-size: 22px; font-weight: 800; color: #fff;
+  margin-bottom: 6px; letter-spacing: -.5px; line-height: 1.2;
+}
+.inspector-slide-name-sub { font-size: 11px; color: rgba(255,255,255,.3); letter-spacing: 1px; text-transform: uppercase; font-weight: 600; }
 
 /* Stats grid */
-.inspector-slide-info { display: grid; grid-template-columns: repeat(2,1fr); gap: 16px; }
+.inspector-slide-info { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; }
 .inspector-slide-stat {
-  background: rgba(255,255,255,.06);
-  padding: 22px 18px;
+  background: rgba(255,255,255,.04);
+  padding: 18px 16px;
   border-radius: 14px;
   text-align: center;
-  border: 1px solid rgba(255,255,255,.09);
-  box-shadow: 0 6px 24px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.06);
+  position: relative; overflow: hidden;
 }
-.inspector-slide-stat-value { font-size: 34px; font-weight: 800; color: #fff; font-family:'DM Mono',monospace; line-height:1; margin-bottom: 8px; }
-.inspector-slide-stat-label { font-size: 11px; color: rgba(255,255,255,.45); text-transform: uppercase; letter-spacing: 1.2px; font-weight: 700; }
+.inspector-slide-stat::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: rgba(255,255,255,.08); border-radius: 14px 14px 0 0;
+}
+.inspector-slide-stat-value {
+  font-size: 30px; font-weight: 800; color: #fff;
+  font-family:'DM Mono',monospace; line-height:1; margin-bottom: 6px; letter-spacing: -1px;
+}
+.inspector-slide-stat-label {
+  font-size: 9px; color: rgba(255,255,255,.3);
+  text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700;
+}
 
 /* Performance circle */
 .inspector-slide-performance { text-align: center; }
-.performance-circle { position: relative; width: 200px; height: 200px; margin: 0 auto 18px; }
-.performance-circle svg { width: 200px; height: 200px; transform: rotate(-90deg); }
-.performance-circle-bg { fill: none; stroke: rgba(255,255,255,.07); stroke-width: 10; }
-.performance-circle-progress { fill: none; stroke-width: 10; stroke-linecap: round; transition: stroke-dashoffset 1s ease; }
+.performance-circle { position: relative; width: 180px; height: 180px; margin: 0 auto 14px; }
+.performance-circle svg { width: 180px; height: 180px; transform: rotate(-90deg); }
+.performance-circle-bg { fill: none; stroke: rgba(255,255,255,.05); stroke-width: 8; }
+.performance-circle-progress { fill: none; stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1); }
 .performance-circle-text { position: absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align: center; }
-.performance-circle-value { font-size: 40px; font-weight: 800; font-family:'DM Mono',monospace; line-height:1; margin-bottom:5px; }
-.performance-circle-label { font-size: 12px; color: rgba(255,255,255,.5); text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
+.performance-circle-value {
+  font-size: 38px; font-weight: 800;
+  font-family:'DM Mono',monospace; line-height:1;
+  margin-bottom: 3px; letter-spacing: -2px;
+}
+.performance-circle-label {
+  font-size: 9px; color: rgba(255,255,255,.35);
+  text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700;
+}
 .performance-level {
-  padding: 8px 24px; border-radius: 20px;
-  font-size: 14px; font-weight: 800;
-  text-transform: uppercase; letter-spacing: 1.2px;
+  padding: 7px 20px; border-radius: 8px;
+  font-size: 11px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 1.5px;
   display: inline-block;
 }
 
 /* Klasman rows */
 .slide-klasman-row {
   display: flex; align-items: center; gap: 10px;
-  padding: 9px 14px;
-  background: rgba(255,255,255,.05);
-  border-radius: 9px; margin-bottom: 7px;
-  border: 1px solid rgba(255,255,255,.07);
+  padding: 8px 12px;
+  background: rgba(255,255,255,.03);
+  border-radius: 8px; margin-bottom: 6px;
+  border: 1px solid rgba(255,255,255,.05);
+  transition: background .15s;
 }
-.slide-klasman-name { font-size: 13px; color: rgba(255,255,255,.75); flex: 1; font-weight: 600; }
-.slide-klasman-adet { font-size: 12px; color: rgba(255,255,255,.4); }
-.slide-klasman-bar { width: 60px; height: 5px; background: rgba(255,255,255,.08); border-radius: 3px; overflow: hidden; }
-.slide-klasman-bar-fill { height: 100%; border-radius: 3px; transition: width .6s ease; }
-.slide-klasman-perf { font-size: 15px; font-weight: 800; font-family:'DM Mono',monospace; min-width: 52px; text-align: right; }
+.slide-klasman-row:hover { background: rgba(255,255,255,.06); }
+.slide-klasman-name { font-size: 12px; color: rgba(255,255,255,.7); flex: 1; font-weight: 600; letter-spacing: -.1px; }
+.slide-klasman-adet { font-size: 10px; color: rgba(255,255,255,.3); white-space: nowrap; }
+.slide-klasman-bar { width: 50px; height: 3px; background: rgba(255,255,255,.06); border-radius: 2px; overflow: hidden; }
+.slide-klasman-bar-fill { height: 100%; border-radius: 2px; transition: width .7s ease; }
+.slide-klasman-perf { font-size: 13px; font-weight: 800; font-family:'DM Mono',monospace; min-width: 48px; text-align: right; letter-spacing: -.5px; }
 
 /* Performance color classes */
-.perf-excellent .inspector-slide-stat-value, .perf-excellent .performance-circle-value { color: #4CAF50; }
-.perf-excellent .performance-circle-progress { stroke: #4CAF50; }
-.perf-excellent .performance-level { background: rgba(76,175,80,.2); color: #81C784; border: 1px solid rgba(76,175,80,.3); }
-.perf-good .inspector-slide-stat-value, .perf-good .performance-circle-value { color: #42A5F5; }
-.perf-good .performance-circle-progress { stroke: #42A5F5; }
-.perf-good .performance-level { background: rgba(33,150,243,.2); color: #90CAF9; border: 1px solid rgba(33,150,243,.3); }
+.perf-excellent .inspector-slide-stat-value, .perf-excellent .performance-circle-value { color: #4DB6AC; }
+.perf-excellent .performance-circle-progress { stroke: #4DB6AC; }
+.perf-excellent .inspector-slide-stat::before { background: linear-gradient(90deg, #00897B, #4DB6AC); }
+.perf-excellent .performance-level { background: rgba(0,137,123,.18); color: #4DB6AC; border: 1px solid rgba(0,137,123,.25); }
+
+.perf-good .inspector-slide-stat-value, .perf-good .performance-circle-value { color: #64B5F6; }
+.perf-good .performance-circle-progress { stroke: #64B5F6; }
+.perf-good .inspector-slide-stat::before { background: linear-gradient(90deg, #1565C0, #64B5F6); }
+.perf-good .performance-level { background: rgba(33,150,243,.15); color: #64B5F6; border: 1px solid rgba(33,150,243,.22); }
+
 .perf-average .inspector-slide-stat-value, .perf-average .performance-circle-value { color: #FFB74D; }
 .perf-average .performance-circle-progress { stroke: #FFB74D; }
-.perf-average .performance-level { background: rgba(255,152,0,.2); color: #FFB74D; border: 1px solid rgba(255,152,0,.3); }
+.perf-average .inspector-slide-stat::before { background: linear-gradient(90deg, #E65100, #FFB74D); }
+.perf-average .performance-level { background: rgba(230,81,0,.18); color: #FFB74D; border: 1px solid rgba(255,152,0,.22); }
+
 .perf-poor .inspector-slide-stat-value, .perf-poor .performance-circle-value { color: #EF9A9A; }
 .perf-poor .performance-circle-progress { stroke: #EF5350; }
-.perf-poor .performance-level { background: rgba(198,40,40,.2); color: #EF9A9A; border: 1px solid rgba(198,40,40,.3); }
+.perf-poor .inspector-slide-stat::before { background: linear-gradient(90deg, #B71C1C, #EF5350); }
+.perf-poor .performance-level { background: rgba(183,28,28,.18); color: #EF9A9A; border: 1px solid rgba(198,40,40,.22); }
 
 /* ─── FOOTER ─── */
 .slideshow-footer {
-  background: rgba(0,0,0,.4);
-  padding: 12px 36px 18px;
-  border-top: 1px solid rgba(255,255,255,.07);
+  background: rgba(0,0,0,.5);
+  padding: 0;
+  border-top: 1px solid rgba(255,255,255,.05);
 }
-.slideshow-progress { background: rgba(255,255,255,.07); height: 4px; border-radius: 2px; margin-bottom: 12px; overflow: hidden; }
-.slideshow-progress-bar { background: linear-gradient(90deg, #1565C0, #42A5F5); height: 100%; width: 0%; transition: width .1s linear; }
-.slideshow-footer-content { display: flex; justify-content: space-between; align-items: center; color: rgba(255,255,255,.7); font-size: 12px; }
-.slideshow-footer-center { font-weight: 700; color: #fff; font-family:'DM Mono',monospace; background: rgba(255,255,255,.12); padding: 4px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,.15); font-size: 13px; }
+.slideshow-progress { background: rgba(255,255,255,.05); height: 3px; overflow: hidden; }
+.slideshow-progress-bar {
+  background: linear-gradient(90deg, #1565C0, #42A5F5, #00BCD4);
+  height: 100%; width: 0%; transition: width .1s linear;
+  box-shadow: 0 0 8px rgba(66,165,245,.6);
+}
+.slideshow-footer-content {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 40px;
+  color: rgba(255,255,255,.3); font-size: 11px; letter-spacing: .3px;
+}
+.slideshow-footer-center {
+  font-weight: 700; color: rgba(255,255,255,.5);
+  font-family:'DM Mono',monospace;
+  font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
+}
+.slideshow-footer-left, .slideshow-footer-right { font-size: 10px; color: rgba(255,255,255,.2); letter-spacing: .5px; }
 
 /* ─── COUNTDOWN RING ─── */
-.countdown-ring-wrap { position: absolute; bottom: 60px; right: 24px; z-index: 10; display: none; }
+.countdown-ring-wrap {
+  position: absolute; bottom: 56px; right: 20px; z-index: 10; display: none;
+  background: rgba(0,0,0,.4); border-radius: 50%; padding: 2px;
+}
 .slideshow-container.running .countdown-ring-wrap { display: block; }
-.countdown-ring { width: 40px; height: 40px; }
-.countdown-ring circle { fill: none; stroke-width: 4; }
-.countdown-ring .ring-bg { stroke: rgba(255,255,255,.1); }
-.countdown-ring .ring-fill { stroke: #42A5F5; stroke-linecap: round; transform-origin: center; transform: rotate(-90deg); transition: stroke-dashoffset .1s linear, stroke .3s; }
-.countdown-ring-num { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: rgba(255,255,255,.8); font-family:'DM Mono',monospace; }
+.countdown-ring { width: 38px; height: 38px; }
+.countdown-ring circle { fill: none; stroke-width: 3; }
+.countdown-ring .ring-bg { stroke: rgba(255,255,255,.07); }
+.countdown-ring .ring-fill {
+  stroke: #42A5F5; stroke-linecap: round;
+  transform-origin: center; transform: rotate(-90deg);
+  transition: stroke-dashoffset .1s linear, stroke .3s;
+}
+.countdown-ring-num {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: rgba(255,255,255,.6);
+  font-family:'DM Mono',monospace;
+}
 
 /* ─── PARTICLES ─── */
 .slide-particles { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
 .slide-particle {
   position: absolute; border-radius: 50%;
-  background: rgba(33,150,243,.04);
+  background: rgba(33,150,243,.06);
   animation: floatParticle linear infinite;
 }
 @keyframes floatParticle {
-  0% { transform: translateY(100%) scale(.5); opacity: 0; }
-  10% { opacity: 1; }
-  90% { opacity: 1; }
-  100% { transform: translateY(-20px) scale(1.2); opacity: 0; }
+  0% { transform: translateY(100%) scale(.4); opacity: 0; }
+  8% { opacity: 1; }
+  92% { opacity: 1; }
+  100% { transform: translateY(-30px) scale(1.1); opacity: 0; }
 }
 
 /* ─── ANIMATIONS ─── */
 .inspector-slide.anim-slide { animation: slideAnim .5s cubic-bezier(.22,1,.36,1); }
-.inspector-slide.anim-fade  { animation: fadeAnim .5s ease; }
-.inspector-slide.anim-zoom  { animation: zoomAnim .45s cubic-bezier(.34,1.56,.64,1); }
+.inspector-slide.anim-fade  { animation: fadeAnim .45s ease; }
+.inspector-slide.anim-zoom  { animation: zoomAnim .42s cubic-bezier(.34,1.4,.64,1); }
 .inspector-slide.anim-flip  { animation: flipAnim .5s ease; }
-@keyframes slideAnim { from{opacity:0;transform:translateX(80px) scale(.95)} to{opacity:1;transform:none} }
-@keyframes fadeAnim  { from{opacity:0;transform:scale(.97)} to{opacity:1;transform:none} }
-@keyframes zoomAnim  { from{opacity:0;transform:scale(.82)} to{opacity:1;transform:none} }
-@keyframes flipAnim  { from{opacity:0;transform:rotateY(-30deg) scale(.93)} to{opacity:1;transform:none} }
+@keyframes slideAnim { from{opacity:0;transform:translateX(60px)} to{opacity:1;transform:none} }
+@keyframes fadeAnim  { from{opacity:0} to{opacity:1} }
+@keyframes zoomAnim  { from{opacity:0;transform:scale(.88)} to{opacity:1;transform:none} }
+@keyframes flipAnim  { from{opacity:0;transform:rotateY(-20deg) scale(.95)} to{opacity:1;transform:none} }
 @keyframes shiftGrad { 0%{background-position:0% 0%} 100%{background-position:200% 0%} }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.65} }
 
@@ -1296,72 +1402,6 @@ label { font-size: 12px; font-weight: 500; color: var(--muted); display: block; 
         </div>
       </div>
 
-      <!-- Google Sheets Banner -->
-      <div class="sheets-banner">
-        <div class="sheets-banner-icon">📊</div>
-        <div class="sheets-banner-text">
-          <strong data-i18n="sheets_conn_title">Google Sheets Connection</strong>
-          <small data-i18n="sheets_conn_sub">Sync classification data with Google Sheets — access from different computers</small>
-        </div>
-        <div class="sheets-banner-actions">
-          <span class="sheets-btn sheets-btn-push" onclick="pushToSheets()" data-i18n="send">📤 Send</span>
-          <span class="sheets-btn sheets-btn-pull" onclick="pullFromSheets()" data-i18n="pull">📥 Pull</span>
-        </div>
-      </div>
-
-      <!-- Sheets URL Ayarı -->
-      <div class="card" style="margin-bottom:16px">
-        <div class="card-header"><h2 data-i18n="sheets_settings_title">🔗 Google Sheets Connection Settings</h2></div>
-        <div class="card-body">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-            <div>
-              <label style="margin-bottom:6px;display:block;font-weight:600" data-i18n="sheets_url_label">Google Apps Script Web App URL (Send/Receive Data)</label>
-              <div class="sheets-url-row">
-                <input type="text" id="sheets-webapp-url" class="sheets-url-input" placeholder="https://script.google.com/macros/s/…/exec" oninput="saveConfig()">
-              </div>
-              <div style="font-size:10px;color:var(--muted);line-height:1.6">
-                Google Sheets → Uzantılar → Apps Script menüsünden bir Web App deploy edin. 
-                <a href="#" onclick="showSheetsHelp();return false" style="color:var(--blue)" data-i18n="how_to_setup">How to set up? ℹ️</a>
-              </div>
-            </div>
-            <div>
-              <label style="margin-bottom:6px;display:block;font-weight:600" data-i18n="sheets_table_label">Google Sheets Table Link (View)</label>
-              <div class="sheets-url-row">
-                <input type="text" id="sheets-view-url" class="sheets-url-input" placeholder="https://docs.google.com/spreadsheets/d/…" oninput="saveConfig()">
-                <a id="sheets-view-link" href="#" target="_blank" style="padding:8px 12px;background:var(--green);color:#fff;border-radius:6px;font-size:12px;text-decoration:none;font-weight:500;white-space:nowrap" data-i18n="open_link">🔗 Open</a>
-              </div>
-              <div style="font-size:10px;color:var(--muted)" data-i18n="open_link_hint">Used to open the table in a browser</div>
-            </div>
-          </div>
-          <!-- API Token satırı -->
-          <div style="margin-top:12px;display:flex;align-items:center;gap:14px;padding:12px 14px;background:var(--lamber);border:1px solid #FFE082;border-radius:8px">
-            <span style="font-size:18px">🔑</span>
-            <div style="flex:1">
-              <label style="font-size:12px;font-weight:600;color:var(--navy);margin-bottom:4px;display:block">API Token <span style="font-weight:400;color:var(--muted)" data-i18n="api_token_hint">(Must match the API_TOKEN in Apps Script)</span></label>
-              <div style="display:flex;gap:8px;align-items:center">
-                <input type="password" id="sheets-api-token" placeholder="lcw-secret-2024" oninput="saveConfig()" style="width:280px;font-family:'DM Mono',monospace;letter-spacing:2px">
-                <button onclick="toggleTokenVisibility()" style="padding:6px 10px;border:1px solid var(--border);background:var(--white);border-radius:6px;cursor:pointer;font-size:12px" id="token-eye-btn">👁️</button>
-                <span style="font-size:11px;color:var(--muted)" data-i18n="apiscript_match_hint">Must match value in Apps Script file <code style="background:var(--border2);padding:1px 5px;border-radius:3px">API_TOKEN</code> değeriyle eşleşmeli</span>
-              </div>
-            </div>
-          </div>
-          <div style="margin-top:12px;padding:10px 14px;background:var(--lblue3);border-radius:8px;border:1px solid var(--lblue);font-size:11px;color:var(--navy)">
-            <strong data-i18n="pw_settings">🔒 Password Settings:</strong> 
-            <span style="color:var(--muted)" data-i18n="current_pw">Current password: </span>
-            <code id="pw-display" style="background:var(--border2);padding:2px 6px;border-radius:4px;font-family:'DM Mono',monospace">****</code>
-            <button onclick="changePwPrompt()" style="margin-left:10px;padding:3px 10px;background:var(--amber);color:#fff;border:none;border-radius:4px;font-size:11px;cursor:pointer" data-i18n="change_pw">✏️ Change Password</button>
-            <span id="pw-sheets-sync-status" style="margin-left:10px;font-size:10px;color:var(--muted)">📊 Sheets Config'e otomatik senkronize edilir</span>
-          </div>
-          <div style="margin-top:8px;padding:10px 14px;background:#FFF3E0;border-radius:8px;border:1px solid #FFB74D;font-size:11px;color:var(--navy)">
-            <strong data-i18n="klasman_pw_label">🔑 Classification Management Password:</strong>
-            <span style="color:var(--muted)" data-i18n="klasman_pw_hint"> Access password for this page: </span>
-            <code id="klasman-pw-display" style="background:var(--border2);padding:2px 6px;border-radius:4px;font-family:'DM Mono',monospace">****</code>
-            <button onclick="changeKlasmanPwPrompt()" style="margin-left:10px;padding:3px 10px;background:#E65100;color:#fff;border:none;border-radius:4px;font-size:11px;cursor:pointer" data-i18n="change_klasman_pw">✏️ Change Classification Password</button>
-            <span style="margin-left:10px;font-size:10px;color:var(--muted)">📊 Sheets Config'e otomatik senkronize edilir</span>
-          </div>
-        </div>
-      </div>
-
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start" id="klasman-layout">
         <!-- Sol: Klasman Grid -->
         <div class="card" style="overflow:hidden">
@@ -1406,7 +1446,97 @@ label { font-size: 12px; font-weight: 500; color: var(--muted); display: block; 
           </div>
         </div>
       </div>
-    </div>
+
+      <!-- ── AYARLAR — AŞAĞI BÖLÜM (Aç/Kapa) ── -->
+      <div style="margin-top:24px">
+
+        <!-- Sheets Bağlantısı Toggle -->
+        <div class="card" style="margin-bottom:10px;overflow:hidden">
+          <div class="card-header" onclick="toggleSection('sheets-body','sheets-chevron')"
+               style="cursor:pointer;user-select:none;background:linear-gradient(135deg,#E8F5E9 0%,#fff 70%);border-bottom:none;padding:14px 18px">
+            <h2 style="gap:8px;color:var(--navy)">
+              <span style="font-size:16px">📊</span>
+              <span data-i18n="sheets_conn_title">Google Sheets Bağlantısı</span>
+            </h2>
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="font-size:10px;color:var(--muted);font-weight:500" data-i18n="sheets_conn_sub">Sheets ile senkronize et</span>
+              <span id="sheets-chevron" style="font-size:14px;color:var(--muted);transition:transform .2s">▼</span>
+            </div>
+          </div>
+          <div id="sheets-body" style="display:none">
+            <div style="padding:8px 18px 6px;background:linear-gradient(135deg,#E8F5E9 0%,#fff 70%);border-bottom:1px solid var(--border2);display:flex;gap:8px">
+              <span class="sheets-btn sheets-btn-push" onclick="pushToSheets()" data-i18n="send">📤 Gönder</span>
+              <span class="sheets-btn sheets-btn-pull" onclick="pullFromSheets()" data-i18n="pull">📥 Çek</span>
+            </div>
+            <div class="card-body">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+                <div>
+                  <label style="margin-bottom:6px;display:block;font-weight:600" data-i18n="sheets_url_label">Google Apps Script Web App URL'si (Veri Gönder/Al)</label>
+                  <div class="sheets-url-row">
+                    <input type="text" id="sheets-webapp-url" class="sheets-url-input" placeholder="https://script.google.com/macros/s/…/exec" oninput="saveConfig()">
+                  </div>
+                  <div style="font-size:10px;color:var(--muted);line-height:1.6">
+                    Google Sheets → Uzantılar → Apps Script menüsünden bir Web App deploy edin.
+                    <a href="#" onclick="showSheetsHelp();return false" style="color:var(--blue)" data-i18n="how_to_setup">Nasıl kurulur? ℹ️</a>
+                  </div>
+                </div>
+                <div>
+                  <label style="margin-bottom:6px;display:block;font-weight:600" data-i18n="sheets_table_label">Google Sheets Tablo Bağlantısı (Görüntüle)</label>
+                  <div class="sheets-url-row">
+                    <input type="text" id="sheets-view-url" class="sheets-url-input" placeholder="https://docs.google.com/spreadsheets/d/…" oninput="saveConfig()">
+                    <a id="sheets-view-link" href="#" target="_blank" style="padding:8px 12px;background:var(--green);color:#fff;border-radius:6px;font-size:12px;text-decoration:none;font-weight:500;white-space:nowrap" data-i18n="open_link">🔗 Aç</a>
+                  </div>
+                  <div style="font-size:10px;color:var(--muted)" data-i18n="open_link_hint">Tabloyu tarayıcıda açmak için kullanılır</div>
+                </div>
+              </div>
+              <!-- API Token -->
+              <div style="margin-top:12px;display:flex;align-items:center;gap:14px;padding:12px 14px;background:var(--lamber);border:1px solid #FFE082;border-radius:8px">
+                <span style="font-size:18px">🔑</span>
+                <div style="flex:1">
+                  <label style="font-size:12px;font-weight:600;color:var(--navy);margin-bottom:4px;display:block">API Token <span style="font-weight:400;color:var(--muted)" data-i18n="api_token_hint">(Apps Script'teki API_TOKEN değeriyle eşleşmeli)</span></label>
+                  <div style="display:flex;gap:8px;align-items:center">
+                    <input type="password" id="sheets-api-token" placeholder="lcw-secret-2024" oninput="saveConfig()" style="width:280px;font-family:'DM Mono',monospace;letter-spacing:2px">
+                    <button onclick="toggleTokenVisibility()" style="padding:6px 10px;border:1px solid var(--border);background:var(--white);border-radius:6px;cursor:pointer;font-size:12px" id="token-eye-btn">👁️</button>
+                    <span style="font-size:11px;color:var(--muted)" data-i18n="apiscript_match_hint">Apps Script dosyasındaki değerle eşleşmeli</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Şifre Ayarları Toggle -->
+        <div class="card" style="margin-bottom:24px;overflow:hidden">
+          <div class="card-header" onclick="toggleSection('pw-settings-body','pw-chevron')"
+               style="cursor:pointer;user-select:none;background:linear-gradient(135deg,#FFF8E1 0%,#fff 70%);border-bottom:none;padding:14px 18px">
+            <h2 style="gap:8px;color:var(--navy)">
+              <span style="font-size:16px">🔒</span>
+              <span data-i18n="pw_settings">Şifre Ayarları</span>
+            </h2>
+            <span id="pw-chevron" style="font-size:14px;color:var(--muted);transition:transform .2s">▼</span>
+          </div>
+          <div id="pw-settings-body" style="display:none">
+            <div class="card-body">
+              <div style="padding:10px 14px;background:var(--lblue3);border-radius:8px;border:1px solid var(--lblue);font-size:11px;color:var(--navy);margin-bottom:8px">
+                <strong data-i18n="pw_settings">🔒 Şifre Ayarları:</strong>
+                <span style="color:var(--muted)" data-i18n="current_pw">Mevcut şifre: </span>
+                <code id="pw-display" style="background:var(--border2);padding:2px 6px;border-radius:4px;font-family:'DM Mono',monospace">****</code>
+                <button onclick="changePwPrompt()" style="margin-left:10px;padding:3px 10px;background:var(--amber);color:#fff;border:none;border-radius:4px;font-size:11px;cursor:pointer" data-i18n="change_pw">✏️ Şifreyi Değiştir</button>
+                <span id="pw-sheets-sync-status" style="margin-left:10px;font-size:10px;color:var(--muted)">📊 Sheets Config'e otomatik senkronize edilir</span>
+              </div>
+              <div style="padding:10px 14px;background:#FFF3E0;border-radius:8px;border:1px solid #FFB74D;font-size:11px;color:var(--navy)">
+                <strong data-i18n="klasman_pw_label">🔑 Klasman Yönetimi Şifresi:</strong>
+                <span style="color:var(--muted)" data-i18n="klasman_pw_hint"> Bu sayfa için erişim şifresi: </span>
+                <code id="klasman-pw-display" style="background:var(--border2);padding:2px 6px;border-radius:4px;font-family:'DM Mono',monospace">****</code>
+                <button onclick="changeKlasmanPwPrompt()" style="margin-left:10px;padding:3px 10px;background:#E65100;color:#fff;border:none;border-radius:4px;font-size:11px;cursor:pointer" data-i18n="change_klasman_pw">✏️ Klasman Şifresini Değiştir</button>
+                <span style="margin-left:10px;font-size:10px;color:var(--muted)">📊 Sheets Config'e otomatik senkronize edilir</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /ayarlar alt bölüm -->
+    </div><!-- /page-klasmanlar -->
 <!-- ══════════ KLASMAN ANALİZİ ══════════ -->
 <div id="page-klasman-analiz" class="page">
   <div class="ph">
@@ -1570,26 +1700,26 @@ label { font-size: 12px; font-weight: 500; color: var(--muted); display: block; 
     <!-- ══════════ CANLI GÖSTERİM ══════════ -->
     <div id="page-canli" class="page">
       <!-- Kurumsal Başlık Çubuğu -->
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;padding:16px 22px;background:var(--white);border:1px solid var(--border2);border-radius:var(--r);box-shadow:var(--shadow)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;padding:18px 24px;background:var(--navy);border-radius:12px;box-shadow:0 4px 24px rgba(11,31,58,.25)">
         <div style="display:flex;align-items:center;gap:14px">
-          <div style="width:42px;height:42px;background:linear-gradient(135deg,#1565C0,#2196F3);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;box-shadow:0 3px 12px rgba(33,150,243,.3)">LC</div>
+          <div style="width:44px;height:44px;background:linear-gradient(135deg,#1565C0,#42A5F5);border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff;box-shadow:0 4px 14px rgba(33,150,243,.4);flex-shrink:0">LC</div>
           <div>
-            <div style="font-size:17px;font-weight:700;color:var(--navy);letter-spacing:-.3px" data-i18n="live_page_title">Live Performance Display</div>
-            <div style="font-size:11px;color:var(--muted);margin-top:2px" data-i18n="live_page_sub">Broadcast inspector performances on a large screen · HD video export</div>
+            <div style="font-size:16px;font-weight:700;color:#fff;letter-spacing:-.3px" data-i18n="live_page_title">Canlı Performans Gösterimi</div>
+            <div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:3px;letter-spacing:.3px" data-i18n="live_page_sub">Inspector performanslarını büyük ekranda yayınlayın · HD video dışa aktarımı</div>
           </div>
         </div>
         <div style="display:flex;gap:10px;align-items:center">
-          <button class="btn" onclick="toggleFullscreen()" style="gap:6px">
+          <button class="btn" onclick="toggleFullscreen()" style="gap:6px;background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.12);color:#fff">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
             Tam Ekran
           </button>
           <button class="btn btn-success" onclick="startVideoRecording()" id="video-rec-btn" style="gap:6px" title="HD 1920×1080 video oluştur">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>
-            HD Video Oluştur
+            HD Video
           </button>
-          <button class="btn btn-primary" onclick="toggleSlideshow()" id="slideshow-btn" style="gap:6px">
+          <button class="btn btn-primary" onclick="toggleSlideshow()" id="slideshow-btn" style="gap:6px;padding:9px 20px;font-weight:700;font-size:13px">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
-            <span data-i18n="start_slideshow">Start Display</span>
+            <span data-i18n="start_slideshow">Gösterimi Başlat</span>
           </button>
         </div>
       </div>
@@ -1597,13 +1727,13 @@ label { font-size: 12px; font-weight: 500; color: var(--muted); display: block; 
       <!-- Kontrol Paneli -->
       <div class="card" id="canli-controls" style="margin-bottom:16px">
         <div class="card-header">
-          <h2><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg> <span data-i18n="broadcast_settings">Broadcast Settings</span></h2>
-          <div style="font-size:11px;color:var(--muted)" data-i18n="broadcast_settings_hint">Configure before starting the display</div>
+          <h2><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg> <span data-i18n="broadcast_settings">Yayın Ayarları</span></h2>
+          <div style="font-size:11px;color:var(--muted)" data-i18n="broadcast_settings_hint">Gösterimi başlatmadan önce ayarlayın</div>
         </div>
         <div class="card-body">
           <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;align-items:end">
             <div>
-              <label data-i18n="slide_duration">⏱ Slide Duration</label>
+              <label data-i18n="slide_duration">⏱ Slayt Süresi</label>
               <select id="slide-duration" onchange="updateSlideDuration()">
                 <option value="3000">3 saniye</option>
                 <option value="5000" selected>5 saniye</option>
@@ -1613,25 +1743,25 @@ label { font-size: 12px; font-weight: 500; color: var(--muted); display: block; 
               </select>
             </div>
             <div>
-              <label data-i18n="view_mode">👁 View Mode</label>
+              <label data-i18n="view_mode">👁 Görüntüleme Modu</label>
               <select id="display-mode" onchange="updateDisplayMode()">
-                <option value="all" data-i18n="all_inspectors">All Inspectors</option>
-                <option value="top5" data-i18n="top5">Top 5</option>
+                <option value="all" data-i18n="all_inspectors">Tüm Inspectorler</option>
+                <option value="top5" data-i18n="top5">İlk 10</option>
                 <option value="excellent">Mükemmel (≥95%)</option>
-                <option value="good" data-i18n="opt_good">Good (≥85%)</option>
+                <option value="good" data-i18n="opt_good">İyi (≥85%)</option>
               </select>
             </div>
             <div>
-              <label data-i18n="transition_effect">✨ Transition Effect</label>
+              <label data-i18n="transition_effect">✨ Geçiş Efekti</label>
               <select id="animation-effect" onchange="updateAnimationEffect()">
-                <option value="slide" selected data-i18n="slide_slide">Slide</option>
+                <option value="slide" selected data-i18n="slide_slide">Kaydırma</option>
                 <option value="fade">Solma</option>
-                <option value="zoom" data-i18n="slide_zoom">Zoom</option>
-                <option value="flip" data-i18n="slide_flip">Flip</option>
+                <option value="zoom" data-i18n="slide_zoom">Yakınlaştırma</option>
+                <option value="flip" data-i18n="slide_flip">Çevirme</option>
               </select>
             </div>
             <div style="display:flex;gap:8px">
-              <button class="btn btn-warning" onclick="resetSlideshow()" style="flex:1" data-i18n="reset">↺ Reset</button>
+              <button class="btn btn-warning" onclick="resetSlideshow()" style="flex:1" data-i18n="reset">↺ Sıfırla</button>
             </div>
           </div>
         </div>
@@ -1655,13 +1785,10 @@ label { font-size: 12px; font-weight: 500; color: var(--muted); display: block; 
 
         <!-- Sol Panel - Ayın En İyi Inspectörleri -->
         <div class="slideshow-sidebar" id="slideshow-sidebar">
-<div class="sidebar-header">
-  <div class="sidebar-title">
-    🏆 AYIN EN İYİLERİ
-  </div>
-  <div class="sidebar-subtitle">Top 5 Performans</div> <!-- "Top Performans"dan "Top 5 Performans"a değiştirildi -->
-</div>
-          
+          <div class="sidebar-header">
+            <div class="sidebar-title">🏆 AYIN EN İYİLERİ</div>
+            <div class="sidebar-subtitle">TOP 10 PERFORMANS</div>
+          </div>
           <div id="top-inspectors-list">
             <!-- Dinamik olarak doldurulacak -->
           </div>
@@ -1675,7 +1802,7 @@ label { font-size: 12px; font-weight: 500; color: var(--muted); display: block; 
               <div class="slideshow-logo-icon">LC</div>
               <div class="slideshow-logo-text">
                 <div>Inspection</div>
-                <div>Inspection Performance</div>
+                <div>Performans Gösterimi</div>
               </div>
             </div>
             <div class="slideshow-stats">
@@ -1685,11 +1812,11 @@ label { font-size: 12px; font-weight: 500; color: var(--muted); display: block; 
               </div>
               <div class="slideshow-stat">
                 <div class="slideshow-stat-value" id="slide-avg-performance">0%</div>
-                <div class="slideshow-stat-label" data-i18n="avg_perf_plain">Average Performance</div>
+                <div class="slideshow-stat-label" data-i18n="avg_perf_plain">Ort. Performans</div>
               </div>
               <div class="slideshow-stat">
                 <div class="slideshow-stat-value" id="slide-current-time">--:--</div>
-                <div class="slideshow-stat-label" data-i18n="current_time">Current Time</div>
+                <div class="slideshow-stat-label" data-i18n="current_time">Şu Anki Saat</div>
               </div>
             </div>
           </div>
@@ -1698,28 +1825,28 @@ label { font-size: 12px; font-weight: 500; color: var(--muted); display: block; 
           <div class="slideshow-announcements" id="slideshow-announcements">
             <div class="announcement-item active">
               <span class="announcement-icon">🏆</span>
-              <span class="announcement-text" id="announcement-text" data-i18n='waiting_best_inspector'>Best Inspector of the Month awaited...</span>
+              <span class="announcement-text" id="announcement-text" data-i18n="waiting_best_inspector">Ayın En İyi Inspector'ü bekleniyor...</span>
             </div>
           </div>
 
           <!-- Ana Slayt Alanı -->
           <div class="slideshow-main" id="slideshow-main">
             <div class="slideshow-welcome">
-              <div class="welcome-icon">🎬</div>
-              <h2 data-i18n="live_h2_title">Live Performance Display</h2>
-              <p data-i18n="live_h2_sub">Track inspector performance live</p>
+              <span class="welcome-icon">📺</span>
+              <h2 data-i18n="live_h2_title">Canlı Performans Gösterimi</h2>
+              <p data-i18n="live_h2_sub">Inspector performansını canlı takip edin</p>
               <div class="welcome-stats">
                 <div class="welcome-stat">
                   <div class="welcome-stat-value" id="welcome-total">0</div>
-                  <div class="welcome-stat-label" data-i18n="stat_total_inspector">Total Inspectors</div>
+                  <div class="welcome-stat-label" data-i18n="stat_total_inspector">Toplam Inspector</div>
                 </div>
                 <div class="welcome-stat">
                   <div class="welcome-stat-value" id="welcome-avg">0%</div>
-                  <div class="welcome-stat-label" data-i18n="avg_perf_plain">Average Performance</div>
+                  <div class="welcome-stat-label" data-i18n="avg_perf_plain">Ortalama Performans</div>
                 </div>
               </div>
               <button class="welcome-start-btn" onclick="toggleSlideshow()">
-                <span data-i18n="start_slideshow">Start Display</span>
+                <span data-i18n="start_slideshow">Gösterimi Başlat</span>
               </button>
             </div>
           </div>
@@ -1731,7 +1858,7 @@ label { font-size: 12px; font-weight: 500; color: var(--muted); display: block; 
             </div>
             <div class="slideshow-footer-content">
               <div class="slideshow-footer-left">
-                <span id="slide-counter" data-i18n="display_not_started">Display not started</span>
+                <span id="slide-counter" data-i18n="display_not_started">Gösterim başlamadı</span>
               </div>
               <div class="slideshow-footer-center">
                 <span id="slide-title">Inspection Performance Dashboard</span>
@@ -2057,7 +2184,7 @@ const translations = {
     status_near:           '⚠️ Yakın',
     std_duration:          'Standart Süre',
     std_duration_th:       'Standart Süre',
-    top5:                  'İlk 5',
+    top5:                  'İlk 10',
     total_duration_label:  'Toplam Süre (sn)',
     total_product:         'Toplam Ürün',
     total_qty:             'Toplam Adet',
@@ -2396,7 +2523,7 @@ const translations = {
     status_near:           '⚠️ Near',
     std_duration:          'Standard Duration',
     std_duration_th:       'Standard Duration',
-    top5:                  'Top 5',
+    top5:                  'Top 10',
     total_duration_label:  'Total Duration (s)',
     total_product:         'Total Products',
     total_qty:             'Total Quantity',
@@ -2904,23 +3031,23 @@ function closePwModal() {
 
 // ── KLasman Sayfası Özel Şifre Modalı ──
 function _openKlasmanModal() {
-  const overlay = document.getElementById('klasman-pw-overlay');
-  if (!overlay) { _buildKlasmanModal(); return; }
-  document.getElementById('kpw-input').value = '';
-  document.getElementById('kpw-err').textContent = '';
-  overlay.style.display = 'flex';
+  // Dil değişikliğine karşı her seferinde yeniden oluştur
+  const existing = document.getElementById('klasman-pw-overlay');
+  if (existing) existing.remove();
+  _buildKlasmanModal();
   setTimeout(() => document.getElementById('kpw-input').focus(), 80);
 }
 
 function _buildKlasmanModal() {
+  const t = translations[currentLang] || translations.tr;
   const div = document.createElement('div');
   div.id = 'klasman-pw-overlay';
   div.style.cssText = 'position:fixed;inset:0;background:rgba(11,31,58,.6);z-index:950;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px);';
   div.innerHTML = `
     <div style="background:#fff;border-radius:18px;padding:36px 32px;width:90vw;max-width:420px;text-align:center;box-shadow:0 20px 60px rgba(11,31,58,.35);border:1px solid var(--border2);animation:popIn .2s ease;">
       <div style="font-size:36px;margin-bottom:12px;">🔑</div>
-      <div style="font-size:18px;font-weight:700;color:var(--navy);margin-bottom:6px;" data-i18n="login_klasman_title">Classification Management</div>
-      <div style="font-size:13px;color:var(--muted);margin-bottom:22px;" data-i18n="login_klasman_sub">Admin password required to access this section</div>
+      <div style="font-size:18px;font-weight:700;color:var(--navy);margin-bottom:6px;">${t.login_klasman_title}</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:22px;">${t.login_klasman_sub}</div>
       <input type="password" id="kpw-input" placeholder="••••••••" 
              style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:15px;font-family:'DM Sans',sans-serif;margin-bottom:10px;text-align:center;letter-spacing:3px;"
              onkeydown="if(event.key==='Enter')checkKlasmanPassword()">
@@ -2928,11 +3055,11 @@ function _buildKlasmanModal() {
       <div style="display:flex;gap:10px;">
         <button onclick="closeKlasmanModal()" 
                 style="flex:1;padding:10px;border:1px solid var(--border);background:#fff;border-radius:9px;font-size:13px;font-weight:500;cursor:pointer;color:var(--muted);">
-          İptal
+          ${t.cancel}
         </button>
         <button onclick="checkKlasmanPassword()" 
                 style="flex:2;padding:10px;background:var(--blue2);color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:600;cursor:pointer;">
-          🔓 Giriş Yap
+          🔓 ${t.login_btn.replace('🔓 ','')}
         </button>
       </div>
     </div>`;
@@ -4681,6 +4808,15 @@ function tickClock(){
     pad(now.getHours())+':'+pad(now.getMinutes())+':'+pad(now.getSeconds());
 }
 setInterval(tickClock,1000); tickClock();
+
+function toggleSection(bodyId, chevronId) {
+  const body = document.getElementById(bodyId);
+  const chev = document.getElementById(chevronId);
+  if (!body) return;
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'block';
+  if (chev) chev.style.transform = isOpen ? '' : 'rotate(180deg)';
+}
 
 function showPage(id, navEl){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -6818,7 +6954,7 @@ function prepareSlideshow() {
     case 'top5':
       inspectors = inspectors
         .sort((a, b) => getDispPerf(b) - getDispPerf(a))
-        .slice(0, 5);
+        .slice(0, 10);
       break;
     case 'excellent':
       inspectors = inspectors.filter(i => getDispPerf(i) >= 95);
@@ -6883,32 +7019,28 @@ function renderTopInspectors() {
   
   if (!performansData || !performansData.length) {
     listContainer.innerHTML = `
-      <div style="text-align: center; padding: 20px; color: rgba(255,255,255,0.5);">
-        <div style="font-size: 24px; margin-bottom: 8px;">📊</div>
-        <div style="font-size: 12px;" data-i18n="no_data_live">No data yet</div>
-        <div style="font-size: 10px; margin-top: 4px;">Excel yükleyip analiz yapın</div>
+      <div style="text-align:center;padding:32px 22px;color:rgba(255,255,255,.3);">
+        <div style="font-size:28px;margin-bottom:10px;opacity:.5">📊</div>
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;">Veri Yok</div>
+        <div style="font-size:10px;margin-top:6px;color:rgba(255,255,255,.2);">Excel yükleyip analiz yapın</div>
       </div>
     `;
     return;
   }
 
-  // En iyi 5 inspector — Düz. Performans (getDispPerf) bazında sırala
   const topInspectors = [...performansData]
     .filter(i => {
       const perf = getDispPerf(i);
       return perf !== null && perf !== undefined && !isNaN(perf) && perf > 0;
     })
     .sort((a, b) => getDispPerf(b) - getDispPerf(a))
-    .slice(0, 5);
+    .slice(0, 10);
 
-  console.log('🏆 Top 5 Inspectors:', topInspectors.length, 'kişi bulundu');
-  
   if (!topInspectors.length) {
     listContainer.innerHTML = `
-      <div style="text-align: center; padding: 20px; color: rgba(255,255,255,0.5);">
-        <div style="font-size: 24px; margin-bottom: 8px;">⚠️</div>
-        <div style="font-size: 12px;">Performans verisi yok</div>
-        <div style="font-size: 10px; margin-top: 4px;" data-i18n="awaiting_results">Awaiting analysis results</div>
+      <div style="text-align:center;padding:32px 22px;color:rgba(255,255,255,.3);">
+        <div style="font-size:28px;margin-bottom:10px;opacity:.5">⚠️</div>
+        <div style="font-size:11px;font-weight:600;">Performans verisi yok</div>
       </div>
     `;
     return;
@@ -6918,43 +7050,41 @@ function renderTopInspectors() {
     const rank = index + 1;
     const performans = Math.round(getDispPerf(inspector));
     const performansClass = getPerformanceClass(performans);
-    const ini = inspector.ins.split(' ').map(w => w[0] || '').slice(0, 2).join('').toUpperCase();
-    
+    const rankCardClass = rank === 1 ? 'rank-1-card' : rank === 2 ? 'rank-2-card' : rank === 3 ? 'rank-3-card' : '';
     const rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : 'rank-other';
     const rankIcon = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank;
-    
+    const t = (translations[currentLang] || translations.tr);
+
+    const perfColor = performans >= 95 ? '#4DB6AC'
+      : performans >= 85 ? '#64B5F6'
+      : performans >= 70 ? '#FFB74D'
+      : '#EF9A9A';
+
     const performanceLevel = (() => {
-      if (performans >= 95) return { text: 'MÜKEMMEL', class: 'badge-excellent' };
-      if (performans >= 85) return { text: 'İYİ', class: 'badge-good' };
-      if (performans >= 70) return { text: 'ORTA', class: 'badge-average' };
-      return { text: 'DÜŞÜK', class: 'badge-poor' };
+      if (performans >= 95) return { text: 'MÜKEMMEL', cls: 'badge-excellent' };
+      if (performans >= 85) return { text: 'İYİ', cls: 'badge-good' };
+      if (performans >= 70) return { text: 'ORTA', cls: 'badge-average' };
+      return { text: 'DÜŞÜK', cls: 'badge-poor' };
     })();
 
     return `
-      <div class="top-inspector-card" onclick="jumpToInspector('${inspector.ins.replace(/'/g, "\\'")}')">
-        <div class="top-inspector-rank ${rankClass}">
-          ${rank <= 3 ? rankIcon : rank}
-        </div>
-        
-        <div class="top-inspector-info">
-          <div class="top-inspector-name">${inspector.ins}</div>
-          <div class="top-inspector-performance ${performansClass}">
-            ${performans}%
+      <div class="top-inspector-card ${rankCardClass}" onclick="jumpToInspector('${inspector.ins.replace(/'/g, "\\'")}')">
+        <div class="top-inspector-info" style="display:flex;align-items:center;gap:10px">
+          <div class="top-inspector-rank ${rankClass}" style="flex-shrink:0">${rank <= 3 ? rankIcon : rank}</div>
+          <div class="top-inspector-info-text" style="flex:1;min-width:0">
+            <div class="top-inspector-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${inspector.ins}</div>
+            <div class="top-inspector-details">
+              ${inspector.adet || 0} ${t.units_short} · ${inspector.gunSayisi || 0} ${t.working}
+            </div>
+            <span class="top-inspector-badge ${performanceLevel.cls}" style="margin-top:4px;display:inline-block">${performanceLevel.text}</span>
           </div>
-          <div class="top-inspector-details">
-            📦 ${inspector.adet || 0} ${(translations[currentLang]||translations.tr).units_short} • ${inspector.gunSayisi || 0} ${(translations[currentLang]||translations.tr).working}<br>
-            🎯 ${Object.keys(inspector.klasmanlar || {}).length} ${(translations[currentLang]||translations.tr).klasman_word} • ${inspector.kayit || 0} ${(translations[currentLang]||translations.tr).records_word}
-          </div>
-          <div class="top-inspector-badge ${performanceLevel.class}">
-            ${performanceLevel.text}
-          </div>
+          <div class="top-inspector-performance ${performansClass}" style="color:${perfColor};flex-shrink:0">${performans}%</div>
         </div>
       </div>
     `;
   }).join('');
 
   listContainer.innerHTML = listHtml;
-  console.log('✅ Top 5 inspectors listesi oluşturuldu:', topInspectors.length, 'kişi');
 }
 
 // ────────────────────────────
@@ -7024,17 +7154,17 @@ function showSlide(index) {
     const barW = Math.min(100, kPerf);
     return `<div class="slide-klasman-row">
       <span class="slide-klasman-name">${kName}</span>
-      <span class="slide-klasman-adet">${kData.adet || 0} adet</span>
+      <span class="slide-klasman-adet">${kData.adet || 0} ${(translations[currentLang]||translations.tr).units_short}</span>
       <div class="slide-klasman-bar"><div class="slide-klasman-bar-fill" style="width:${barW}%;background:${kColor}"></div></div>
       <span class="slide-klasman-perf" style="color:${kColor}">${kPerf}%</span>
     </div>`;
-  }).join('') : '<div style="font-size:12px;color:rgba(255,255,255,.4);text-align:center;padding:8px">Klasman verisi yok</div>';
+  }).join('') : `<div style="font-size:12px;color:rgba(255,255,255,.4);text-align:center;padding:8px">${(translations[currentLang]||translations.tr).no_data_live}</div>`;
 
   const slideHtml = `
     <div class="inspector-slide active ${performansClass} anim-${animationEffect}">
       <div class="inspector-slide-header">
-        <div class="inspector-slide-title">Inspector Performans Raporu</div>
-        <div class="inspector-slide-subtitle">${new Date().toLocaleDateString('tr-TR', { 
+        <div class="inspector-slide-title">${(translations[currentLang]||translations.tr).detailed_perf}</div>
+        <div class="inspector-slide-subtitle">${new Date().toLocaleDateString(currentLang === 'en' ? 'en-GB' : 'tr-TR', { 
           weekday: 'long', 
           year: 'numeric', 
           month: 'long', 
@@ -7060,19 +7190,19 @@ function showSlide(index) {
         <div class="inspector-slide-info">
           <div class="inspector-slide-stat">
             <div class="inspector-slide-stat-value">${inspector.adet || 0}</div>
-            <div class="inspector-slide-stat-label" data-i18n="total_product">Total Products</div>
+            <div class="inspector-slide-stat-label">${(translations[currentLang]||translations.tr).total_product}</div>
           </div>
           <div class="inspector-slide-stat">
             <div class="inspector-slide-stat-value">${inspector.kayit || 0}</div>
-            <div class="inspector-slide-stat-label" data-i18n="record_count">Record Count</div>
+            <div class="inspector-slide-stat-label">${(translations[currentLang]||translations.tr).record_count}</div>
           </div>
           <div class="inspector-slide-stat">
             <div class="inspector-slide-stat-value">${fmtSnKisa(inspector.standartSure||0)}</div>
-            <div class="inspector-slide-stat-label" data-i18n="std_duration">Standard Duration</div>
+            <div class="inspector-slide-stat-label">${(translations[currentLang]||translations.tr).std_duration}</div>
           </div>
           <div class="inspector-slide-stat">
             <div class="inspector-slide-stat-value">${Object.keys(inspector.klasmanlar || {}).length}</div>
-            <div class="inspector-slide-stat-label" data-i18n="klasman_count">Classifications</div>
+            <div class="inspector-slide-stat-label">${(translations[currentLang]||translations.tr).klasman_count}</div>
           </div>
         </div>
         
@@ -7097,12 +7227,12 @@ function showSlide(index) {
             </svg>
             <div class="performance-circle-text">
               <div class="performance-circle-value">${performans}%</div>
-              <div class="performance-circle-label">${inspector.verimlilikPerf !== null && inspector.verimlilikPerf !== undefined ? 'Düz. Perf.' : 'Performans'}</div>
+              <div class="performance-circle-label">${inspector.verimlilikPerf !== null && inspector.verimlilikPerf !== undefined ? (translations[currentLang]||translations.tr).adj_perf_label_upper : (translations[currentLang]||translations.tr).avg_perf_plain}</div>
             </div>
           </div>
           <div class="performance-level">${performansLevel}</div>
           ${inspector.verimlilikPerf !== null && inspector.verimlilikPerf !== undefined && hamPerf !== performans
-            ? `<div style="margin-top:10px;font-size:12px;color:rgba(255,255,255,.5)">Ham: <strong style="color:rgba(255,255,255,.75)">${hamPerf}%</strong></div>`
+            ? `<div style="margin-top:10px;font-size:12px;color:rgba(255,255,255,.5)">${(translations[currentLang]||translations.tr).raw_avg} <strong style="color:rgba(255,255,255,.75)">${hamPerf}%</strong></div>`
             : ''}
         </div>
       </div>
@@ -7120,24 +7250,25 @@ function showSlide(index) {
 
 function showWelcomeScreen() {
   const mainArea = document.getElementById('slideshow-main');
+  const t = translations[currentLang] || translations.tr;
   
   mainArea.innerHTML = `
     <div class="slideshow-welcome">
-      <div class="welcome-icon">🎬</div>
-      <h2 data-i18n="live_page_title">Live Performance Display</h2>
-      <p data-i18n="live_h2_sub">Track inspector performance live</p>
+      <span class="welcome-icon">📺</span>
+      <h2>${t.live_h2_title}</h2>
+      <p>${t.live_h2_sub}</p>
       <div class="welcome-stats">
         <div class="welcome-stat">
           <div class="welcome-stat-value" id="welcome-total">0</div>
-          <div class="welcome-stat-label" data-i18n="stat_total_inspector">Total Inspectors</div>
+          <div class="welcome-stat-label">${t.stat_total_inspector}</div>
         </div>
         <div class="welcome-stat">
           <div class="welcome-stat-value" id="welcome-avg">0%</div>
-          <div class="welcome-stat-label" data-i18n="avg_perf_plain">Average Performance</div>
+          <div class="welcome-stat-label">${t.avg_perf_plain}</div>
         </div>
       </div>
       <button class="welcome-start-btn" onclick="toggleSlideshow()">
-        ${(translations[currentLang]||translations.tr).start_slideshow}
+        ${t.start_slideshow}
       </button>
     </div>
   `;
