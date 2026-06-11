@@ -3274,15 +3274,9 @@ async function pushToSheets() {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify(payload),
-mode: 'no-cors'
+      mode: 'no-cors'
     });
-    showSuccessMessage('✅ ' + klasmanlar.length + ' ' + (translations[currentLang]||translations.tr).sheets_sent_klasman);
-  } catch(err) {
-    alert('❌ Gönderme hatası: ' + err.message);
-  } finally {
-    if (btn) { btn.textContent = origText; btn.disabled = false; }
-  }
-}
+ 
 
 function renderKlasmanAnaliz() {
   const el = document.getElementById('klasman-analiz-icerik');
@@ -4432,8 +4426,8 @@ function fixVerimlilikPerf(liste) {
     const vAciklama = document.getElementById('verimlilik-aciklama');
     if (vAciklama) {
       if (sheetsHedef === 100) vAciklama.textContent = '';
-if (sheetsHedef < 100) vAciklama.textContent = `(%${sheetsHedef} ${(translations[currentLang]||translations.tr).target_below_100} ${(100/sheetsHedef).toFixed(2)}x) `;
-      else vAciklama.textContent = `(%${sheetsHedef} ${(translations[currentLang]||translations.tr).target_above_100} ${(100/sheetsHedef).toFixed(2)}x) `;
+      else if (sheetsHedef < 100) vAciklama.textContent = `(%${sheetsHedef} (translations[currentLang]||translations.tr).target_below_100 ${(100/sheetsHedef).toFixed(2)}x) `;
+      else vAciklama.textContent = `(%${sheetsHedef} (translations[currentLang]||translations.tr).target_above_100 ${(100/sheetsHedef).toFixed(2)}x) `;
     }
   }
   // orneklemeMod radio'sunu Sheets'ten gelen değere göre set et
@@ -6495,8 +6489,8 @@ function performansHesapla(){
   const vAciklama = document.getElementById('verimlilik-aciklama');
   if (vAciklama) {
     if (verimlilikHedef === 100) vAciklama.textContent = '';
-    else if (verimlilikHedef < 100) vAciklama.textContent = `(%${verimlilikHedef} ${(translations[currentLang]||translations.tr).target_below_100} ${(100/verimlilikHedef).toFixed(2)}x) `;
-      else vAciklama.textContent = `(%${verimlilikHedef} ${(translations[currentLang]||translations.tr).target_above_100} ${(100/verimlilikHedef).toFixed(2)}x) `;
+    else if (verimlilikHedef < 100) vAciklama.textContent = `(%${verimlilikHedef} (translations[currentLang]||translations.tr).target_below_100 ${(100/verimlilikHedef).toFixed(2)}x) `;
+    else vAciklama.textContent = `(%${verimlilikHedef} (translations[currentLang]||translations.tr).target_above_100 ${(100/verimlilikHedef).toFixed(2)}x) `;
   }
 
   if(!klasmanCol || !insCol || !adetCol){
