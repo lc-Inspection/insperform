@@ -4606,6 +4606,60 @@ function saveDashboardData() { saveData(); }
 async function clearDashboardData() {
   if (!confirm((translations[currentLang]||translations.tr).clear_confirm)) return;
 
+  // ── Tüm devam eden işlemleri durdur ──────────────────────────────────────
+  
+  // 1) Slideshow durdur
+  if (slideshowActive) {
+    slideshowActive = false;
+    if (slideshowInterval) { clearInterval(slideshowInterval); slideshowInterval = null; }
+    if (progressInterval)  { clearInterval(progressInterval);  progressInterval  = null; }
+    document.getElementById('slideshow-container').classList.remove('running');
+    document.getElementById('slideshow-btn').innerHTML =
+      '<svg width=14 height=14 viewBox="0 0 24 24" fill="currentColor" style="margin-right:4px"><polygon points="5,3 19,12 5,21"/></svg> '
+      + (translations[currentLang]||translations.tr).start_slideshow;
+    const canliCtrl = document.getElementById('canli-controls');
+    if (canliCtrl) canliCtrl.style.display = 'block';
+    showWelcomeScreen();
+  }
+
+  // 2) HD Video kaydı durdur
+  if (_vidRendering) {
+    _vidRendering = false;
+    _stopFillLoop();
+    clearTimeout(_vidSlideTimer);
+    if (_vidRecorder && _vidRecorder.state !== 'inactive') _vidRecorder.stop();
+    if (_vidStream) { _vidStream.getTracks().forEach(t => t.stop()); _vidStream = null; }
+    _hideRecordingIndicator();
+    const vidBtn = document.getElementById('video-rec-btn');
+    if (vidBtn) {
+      vidBtn.innerHTML  = '🎥 Video Oluştur';
+      vidBtn.className  = 'btn btn-success';
+      vidBtn.disabled   = false;
+      vidBtn.onclick    = startVideoRecording;
+    }
+  }
+
+  // 3) Countdown ring durdur
+  _stopCountdownRing();
+
+  // 4) Klasman auto-push timer iptal et
+  clearTimeout(_klasmanPushTimer);
+  clearTimeout(window._configPushTimer);
+
+  // 5) Başlangıç banner'ı gizle
+  hideStartupBanner();
+
+  // 6) Analiz overlay açıksa kapat
+  const aoOv = document.getElementById('analiz-overlay');
+  if (aoOv && aoOv.style.display !== 'none') closeAnalizOverlay();
+
+  // 7) Tüm açık modalları kapat
+  closeModal();
+  closeDetailModal();
+  const kpwOv = document.getElementById('klasman-pw-overlay');
+  if (kpwOv) kpwOv.style.display = 'none';
+
+  // ── Verileri sıfırla ──────────────────────────────────────────────────────
   const url   = appConfig.sheetsWebAppUrl;
   const token = appConfig.sheetsApiToken;
 
@@ -4613,25 +4667,28 @@ async function clearDashboardData() {
   const origText = btn ? btn.innerHTML : '';
   if (btn) { btn.innerHTML = (translations[currentLang]||translations.tr).clearing; btn.disabled = true; }
 
-  performansData = [];
-  excelRows = [];
-  excelCols = [];
-  currentDashboardPage = 1;
+  performansData         = [];
+  excelRows              = [];
+  excelCols              = [];
+  currentDashboardPage   = 1;
+  filteredInspectors     = [];
+  slideshowInspectors    = [];
+  currentSlideIndex      = 0;
+  selectedInspectorDetail = null;
+
   saveData();
   renderDashboard();
   renderPerfTabloFromData();
   updateSidebar();
   renderTopInspectors();
 
+  // ── Sheets temizle ────────────────────────────────────────────────────────
   if (url && token) {
     try {
       await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify({
-          action: 'clearPerformansData',
-          token: token
-        }),
+        body: JSON.stringify({ action: 'clearPerformansData', token }),
         mode: 'no-cors'
       });
       showSuccessMessage((translations[currentLang]||translations.tr).clear_ok_sheets);
