@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dijital Tabela — Yönetim</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0f0f13;
+  --surface: #1a1a22;
+  --surface2: #22222e;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.15);
+  --text: #f0eeff;
+  --muted: #8884a8;
+  --accent: #7c6af7;
+  --accent-h: #9585ff;
+  --accent-dim: rgba(124,106,247,0.15);
+  --danger: #e05555;
+  --danger-dim: rgba(224,85,85,0.12);
+  --success: #4caf87;
+  --warn: #e09c40;
+  --radius: 10px;
+  --radius-sm: 6px;
+}
+
+body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; min-height: 100vh; }
+
+.shell { display: flex; min-height: 100vh; }
+
+/* Sidebar */
+.sidebar { width: 220px; flex-shrink: 0; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 10; }
+.logo { padding: 20px 20px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+.logo-icon { width: 28px; height: 28px; background: var(--accent); border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.logo-icon svg { width: 15px; height: 15px; fill: #fff; }
+.logo-name { font-size: 15px; font-weight: 600; letter-spacing: -0.3px; }
+.nav { padding: 12px 10px; flex: 1; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: var(--radius-sm); color: var(--muted); cursor: pointer; transition: background 0.15s, color 0.15s; font-size: 13.5px; margin-bottom: 2px; user-select: none; }
+.nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active { background: var(--accent-dim); color: var(--accent); }
+
+/* API config bar */
+.api-bar { margin: 0 10px 12px; padding: 10px 12px; background: var(--surface2); border-radius: var(--radius-sm); border: 1px solid var(--border2); }
+.api-bar label { font-size: 11px; color: var(--muted); display: block; margin-bottom: 5px; }
+.api-bar input { width: 100%; background: var(--bg); border: 1px solid var(--border2); border-radius: 4px; color: var(--text); font-size: 11px; padding: 5px 8px; outline: none; font-family: monospace; }
+.api-bar input:focus { border-color: var(--accent); }
+.api-status { font-size: 10px; margin-top: 5px; }
+.api-status.ok { color: var(--success); }
+.api-status.err { color: var(--danger); }
+.api-status.loading { color: var(--warn); }
+
+/* Main */
+.main { margin-left: 220px; flex: 1; padding: 32px 36px; max-width: 960px; }
+.topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
+.topbar h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.4px; }
+.topbar p { color: var(--muted); font-size: 13px; margin-top: 2px; }
+
+/* Buttons */
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: var(--radius-sm); font-size: 13.5px; font-weight: 500; cursor: pointer; border: none; transition: 0.15s; white-space: nowrap; }
+.btn svg { width: 15px; height: 15px; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent-h); }
+.btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border2); }
+.btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.3); }
+.btn-danger { background: var(--danger-dim); color: var(--danger); border: 1px solid rgba(224,85,85,0.2); }
+.btn-danger:hover { background: rgba(224,85,85,0.2); }
+.btn-sm { padding: 5px 10px; font-size: 12.5px; }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* Screens grid */
+.screens-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+.screen-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; transition: border-color 0.15s; }
+.screen-card:hover { border-color: var(--border2); }
+.screen-preview { height: 110px; background: var(--bg); display: flex; align-items: center; justify-content: center; border-bottom: 1px solid var(--border); position: relative; }
+.screen-preview svg { width: 38px; height: 38px; opacity: 0.12; fill: var(--text); }
+.screen-dot { position: absolute; top: 8px; right: 8px; width: 8px; height: 8px; border-radius: 50%; background: #333; }
+.screen-dot.on { background: var(--success); box-shadow: 0 0 0 2px rgba(76,175,135,0.2); }
+.screen-info { padding: 12px 14px; }
+.screen-name { font-size: 13.5px; font-weight: 500; margin-bottom: 3px; }
+.screen-meta { font-size: 12px; color: var(--muted); margin-bottom: 10px; min-height: 16px; }
+.screen-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* Playlist list */
+.pl-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 8px; }
+.pl-item:hover { border-color: var(--border2); }
+.pl-thumb { width: 52px; height: 34px; background: var(--surface2); border-radius: 4px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+.pl-thumb svg { width: 16px; height: 16px; fill: var(--muted); }
+.pl-details { flex: 1; min-width: 0; }
+.pl-name { font-size: 13.5px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pl-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.pl-actions { display: flex; gap: 6px; align-items: center; }
+
+/* Badge */
+.badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; white-space: nowrap; }
+.badge-purple { background: var(--accent-dim); color: var(--accent); }
+.badge-green { background: rgba(76,175,135,0.15); color: var(--success); }
+.badge-gray { background: var(--surface2); color: var(--muted); }
+
+/* Modal */
+.overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 100; align-items: center; justify-content: center; }
+.overlay.open { display: flex; }
+.modal { background: var(--surface); border: 1px solid var(--border2); border-radius: 14px; padding: 24px; width: 520px; max-width: 95vw; max-height: 90vh; overflow-y: auto; }
+.modal-title { font-size: 16px; font-weight: 600; margin-bottom: 20px; }
+.modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+
+/* Form */
+.fg { margin-bottom: 16px; }
+.fl { display: block; font-size: 12.5px; color: var(--muted); margin-bottom: 6px; }
+.fi, .fs { width: 100%; padding: 8px 12px; background: var(--bg); border: 1px solid var(--border2); border-radius: var(--radius-sm); color: var(--text); font-size: 13.5px; outline: none; transition: border-color 0.15s; }
+.fi:focus, .fs:focus { border-color: var(--accent); }
+.fs option { background: var(--surface); }
+.fi::placeholder { color: var(--muted); opacity: 0.6; }
+
+/* Media entries */
+.media-entry { display: grid; grid-template-columns: 1fr 70px 30px; gap: 6px; align-items: center; margin-bottom: 8px; }
+.media-entry .fi { font-size: 12.5px; }
+.media-entry .dur { font-size: 12.5px; text-align: center; }
+.del-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 16px; padding: 0; line-height: 1; display: flex; align-items: center; justify-content: center; height: 34px; }
+.del-btn:hover { color: var(--danger); }
+.media-header { display: grid; grid-template-columns: 1fr 70px 30px; gap: 6px; margin-bottom: 4px; }
+.media-header span { font-size: 11px; color: var(--muted); }
+
+/* URL modal */
+.url-box { display: flex; gap: 8px; align-items: center; background: var(--bg); border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 10px 12px; margin-top: 8px; }
+.url-box code { flex: 1; font-size: 12px; color: var(--accent); font-family: monospace; word-break: break-all; }
+
+/* Toast */
+.toast { position: fixed; bottom: 24px; right: 24px; background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 10px 16px; font-size: 13px; z-index: 999; transform: translateY(8px); opacity: 0; transition: 0.2s; pointer-events: none; max-width: 320px; }
+.toast.show { opacity: 1; transform: translateY(0); }
+
+/* Empty */
+.empty { text-align: center; padding: 48px 20px; color: var(--muted); }
+.empty svg { width: 36px; height: 36px; stroke: var(--muted); opacity: 0.3; margin-bottom: 12px; display: block; margin-left: auto; margin-right: auto; }
+.empty p { font-size: 13px; line-height: 1.6; }
+
+/* Page */
+.page { display: none; }
+.page.active { display: block; }
+
+/* Spinner */
+.spin { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.2); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Kurulum adımları */
+.steps { counter-reset: step; }
+.step { display: flex; gap: 16px; margin-bottom: 20px; }
+.step-num { width: 28px; height: 28px; background: var(--accent-dim); color: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; flex-shrink: 0; margin-top: 1px; }
+.step-body h3 { font-size: 14px; font-weight: 500; margin-bottom: 5px; }
+.step-body p, .step-body li { font-size: 13px; color: var(--muted); line-height: 1.7; }
+.step-body ul { padding-left: 16px; margin-top: 4px; }
+.step-body code { background: var(--surface2); padding: 1px 6px; border-radius: 4px; font-size: 12px; color: var(--accent); font-family: monospace; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; }
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 20 20"><rect x="1" y="3" width="18" height="12" rx="2"/><rect x="7" y="16" width="6" height="1.5" rx="0.5"/><line x1="4" y1="17.5" x2="16" y2="17.5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </div>
+    <span class="logo-name">SignagePanel</span>
+  </div>
+  <nav class="nav">
+    <div class="nav-item active" data-page="screens" onclick="nav(this)">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="16" height="11" rx="2"/><line x1="7" y1="17" x2="13" y2="17" stroke-linecap="round"/><line x1="10" y1="15" x2="10" y2="17"/></svg>
+      Ekranlar
+    </div>
+    <div class="nav-item" data-page="playlists" onclick="nav(this)">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="3" y1="6" x2="17" y2="6" stroke-linecap="round"/><line x1="3" y1="10" x2="17" y2="10" stroke-linecap="round"/><line x1="3" y1="14" x2="11" y2="14" stroke-linecap="round"/><polygon points="14,12 14,17 18,14.5" fill="currentColor" stroke="none"/></svg>
+      Playlist'ler
+    </div>
+    <div class="nav-item" data-page="setup" onclick="nav(this)">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="7"/><path d="M10 13v-1c0-1 2.5-1.5 2.5-3.5a2.5 2.5 0 0 0-5 0" stroke-linecap="round"/><circle cx="10" cy="15" r="0.5" fill="currentColor"/></svg>
+      Kurulum
+    </div>
+  </nav>
+  <div class="api-bar">
+    <label>Apps Script URL</label>
+    <input id="api-url" placeholder="https://script.google.com/..." oninput="saveApiUrl()" />
+    <div class="api-status" id="api-status"></div>
+  </div>
+</aside>
+
+<!-- Main -->
+<main class="main">
+
+  <!-- EKRANLAR -->
+  <div id="page-screens" class="page active">
+    <div class="topbar">
+      <div><h1>Ekranlar</h1><p>Televizyonlarınızı yönetin</p></div>
+      <button class="btn btn-primary" onclick="openAddScreen()">
+        <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 4a1 1 0 011 1v4h4a1 1 0 110 2h-4v4a1 1 0 11-2 0v-4H5a1 1 0 110-2h4V5a1 1 0 011-1z"/></svg>
+        Ekran Ekle
+      </button>
+    </div>
+    <div id="screens-grid" class="screens-grid">
+      <div class="empty" style="grid-column:1/-1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="2" y="4" width="20" height="14" rx="2"/></svg><p>Yükleniyor…</p></div>
+    </div>
+  </div>
+
+  <!-- PLAYLİST'LER -->
+  <div id="page-playlists" class="page">
+    <div class="topbar">
+      <div><h1>Playlist'ler</h1><p>Video ve görsel dizileri</p></div>
+      <button class="btn btn-primary" onclick="openAddPlaylist()">
+        <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 4a1 1 0 011 1v4h4a1 1 0 110 2h-4v4a1 1 0 11-2 0v-4H5a1 1 0 110-2h4V5a1 1 0 011-1z"/></svg>
+        Playlist Ekle
+      </button>
+    </div>
+    <div id="playlists-list"></div>
+  </div>
+
+  <!-- KURULUM -->
+  <div id="page-setup" class="page">
+    <div class="topbar"><div><h1>Kurulum Rehberi</h1></div></div>
+    <div class="card">
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h3>Google Sheet oluşturun</h3>
+            <p>Yeni bir Google Sheet açın. URL'deki <code>/d/XXXX/edit</code> kısmındaki <code>XXXX</code> sizin Sheet ID'nizdir.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h3>Apps Script'i kurun</h3>
+            <ul>
+              <li>Sheet'te <strong style="color:var(--text)">Uzantılar → Apps Script</strong>'e gidin</li>
+              <li><code>Code.gs</code> dosyasının içeriğini yapıştırın</li>
+              <li><code>SHEET_ID</code> satırını kendi ID'nizle değiştirin</li>
+              <li>Önce <strong style="color:var(--text)">initSheets</strong> fonksiyonunu çalıştırın (ilk seferlik)</li>
+            </ul>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h3>Web uygulaması olarak dağıtın</h3>
+            <ul>
+              <li><strong style="color:var(--text)">Dağıt → Yeni dağıtım → Web uygulaması</strong></li>
+              <li>Farklı çalıştır: <code>Ben</code></li>
+              <li>Erişim: <code>Herkes</code></li>
+              <li>Dağıt → URL'i kopyalayın</li>
+            </ul>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <h3>URL'i sol alt kutuya yapıştırın</h3>
+            <p>Sidebar'daki <strong style="color:var(--text)">Apps Script URL</strong> kutusuna yapıştırın. Bağlantı otomatik test edilir.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <h3>SharePoint'ten video linki alma</h3>
+            <p>SharePoint'te videoya sağ tıklayın → <strong style="color:var(--text)">Bağlantıyı kopyala</strong>. Bu linki direkt playlist'e yapıştırın — sistem otomatik olarak indirilebilir URL'e çevirir.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">6</div>
+          <div class="step-body">
+            <h3>TV'de player.html'i açın</h3>
+            <p>Ekran kartındaki <strong style="color:var(--text)">URL</strong> butonuna tıklayın, çıkan linki TV tarayıcısında açın. <code>F</code> tuşu tam ekran yapar.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+</div>
+
+<!-- EKRAN MODAL -->
+<div id="modal-screen" class="overlay">
+  <div class="modal">
+    <div class="modal-title" id="ms-title">Yeni Ekran</div>
+    <div class="fg"><label class="fl">Ekran adı *</label><input class="fi" id="s-name" placeholder="Örn: Lobi TV"></div>
+    <div class="fg"><label class="fl">Konum</label><input class="fi" id="s-loc" placeholder="Örn: 2. Kat, Departman A"></div>
+    <div class="fg"><label class="fl">Playlist</label>
+      <select class="fs" id="s-pl"><option value="">— Seçin —</option></select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-screen')">İptal</button>
+      <button class="btn btn-primary" id="s-save-btn" onclick="saveScreen()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- PLAYLİST MODAL -->
+<div id="modal-playlist" class="overlay">
+  <div class="modal">
+    <div class="modal-title" id="mp-title">Yeni Playlist</div>
+    <div class="fg"><label class="fl">Playlist adı *</label><input class="fi" id="p-name" placeholder="Örn: Ana Duyurular"></div>
+    <div class="fg">
+      <label class="fl">İçerikler</label>
+      <div class="media-header">
+        <span>URL (SharePoint linki veya direkt URL)</span>
+        <span style="text-align:center">Süre (sn)</span>
+        <span></span>
+      </div>
+      <div id="media-list"></div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:4px" onclick="addEntry()">+ İçerik ekle</button>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-playlist')">İptal</button>
+      <button class="btn btn-primary" id="p-save-btn" onclick="savePlaylist()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- URL MODAL -->
+<div id="modal-url" class="overlay">
+  <div class="modal" style="width:480px">
+    <div class="modal-title">Player URL'i</div>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:10px">TV tarayıcısında bu URL'i açın. <code style="color:var(--accent);font-size:12px">F</code> → tam ekran</p>
+    <div class="url-box"><code id="url-txt"></code><button class="btn btn-ghost btn-sm" onclick="copyUrl()">Kopyala</button></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-url')">Kapat</button>
+      <button class="btn btn-primary" onclick="window.open(currentUrl,'_blank')">Aç ↗</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Config ────────────────────────────────────────────
+let API = localStorage.getItem('ds_api_url') || '';
+let screens = [], playlists = [];
+let editingScreen = null, editingPlaylist = null;
+let currentUrl = '';
+
+document.getElementById('api-url').value = API;
+if (API) testApi();
+
+function saveApiUrl() {
+  API = document.getElementById('api-url').value.trim();
+  localStorage.setItem('ds_api_url', API);
+  if (API.length > 20) { clearTimeout(saveApiUrl._t); saveApiUrl._t = setTimeout(testApi, 800); }
+}
+
+async function testApi() {
+  if (!API) return;
+  setApiStatus('loading', 'Bağlanıyor…');
+  try {
+    const r = await apiFetch('getScreens');
+    if (r.ok !== undefined) { setApiStatus('ok', 'Bağlantı başarılı ✓'); loadAll(); }
+    else setApiStatus('err', 'Hata: ' + (r.error || 'Bilinmiyor'));
+  } catch { setApiStatus('err', 'Bağlanamadı'); }
+}
+
+function setApiStatus(type, msg) {
+  const el = document.getElementById('api-status');
+  el.className = 'api-status ' + type;
+  el.textContent = msg;
+}
+
+// ── API ───────────────────────────────────────────────
+async function apiFetch(action, params) {
+  if (!API) throw new Error('API URL girilmedi');
+  const url = API + '?action=' + action + (params ? '&' + new URLSearchParams(params) : '');
+  const r = await fetch(url);
+  return r.json();
+}
+
+async function apiPost(body) {
+  if (!API) throw new Error('API URL girilmedi');
+  const r = await fetch(API, {
+    method: 'POST',
+    body: JSON.stringify(body),
+    headers: { 'Content-Type': 'application/json' }
+  });
+  return r.json();
+}
+
+async function loadAll() {
+  const [s, p] = await Promise.all([
+    apiFetch('getScreens').catch(() => ({ data: [] })),
+    apiFetch('getPlaylists').catch(() => ({ data: [] }))
+  ]);
+  screens = s.data || [];
+  playlists = p.data || [];
+  renderScreens();
+  renderPlaylists();
+}
+
+// ── Nav ───────────────────────────────────────────────
+function nav(el) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('page-' + el.dataset.page).classList.add('active');
+}
+
+// ── Toast ─────────────────────────────────────────────
+function toast(msg, duration) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => el.classList.remove('show'), duration || 2500);
+}
+
+// ── Modal ─────────────────────────────────────────────
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+document.querySelectorAll('.overlay').forEach(o => {
+  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+});
+
+// ── Screens ───────────────────────────────────────────
+function renderScreens() {
+  const g = document.getElementById('screens-grid');
+  if (!screens.length) {
+    g.innerHTML = `<div class="empty" style="grid-column:1/-1">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="2" y="4" width="20" height="14" rx="2"/></svg>
+      <p>Henüz ekran eklenmedi.<br>Sağ üstten yeni ekran ekleyin.</p>
+    </div>`;
+    return;
+  }
+  g.innerHTML = screens.map(s => {
+    const pl = playlists.find(p => p.id === s.playlistId);
+    return `<div class="screen-card">
+      <div class="screen-preview">
+        <svg viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="4" width="20" height="14" rx="2"/></svg>
+        <div class="screen-dot ${pl ? 'on' : ''}"></div>
+      </div>
+      <div class="screen-info">
+        <div class="screen-name">${esc(s.name)}</div>
+        <div class="screen-meta">${esc(s.location || 'Konum belirtilmedi')} · ${pl ? esc(pl.name) : '<span style="color:var(--danger)">Playlist yok</span>'}</div>
+        <div class="screen-actions">
+          <button class="btn btn-ghost btn-sm" onclick="showUrl('${s.id}')">URL</button>
+          <button class="btn btn-ghost btn-sm" onclick="editScreen('${s.id}')">Düzenle</button>
+          <button class="btn btn-danger btn-sm" onclick="delScreen('${s.id}')">Sil</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openAddScreen() {
+  if (!checkApi()) return;
+  editingScreen = null;
+  document.getElementById('ms-title').textContent = 'Yeni Ekran';
+  document.getElementById('s-name').value = '';
+  document.getElementById('s-loc').value = '';
+  fillPlSelect(null);
+  openModal('modal-screen');
+}
+
+function editScreen(id) {
+  const s = screens.find(x => x.id === id);
+  editingScreen = s;
+  document.getElementById('ms-title').textContent = 'Ekranı Düzenle';
+  document.getElementById('s-name').value = s.name;
+  document.getElementById('s-loc').value = s.location || '';
+  fillPlSelect(s.playlistId);
+  openModal('modal-screen');
+}
+
+function fillPlSelect(sel) {
+  document.getElementById('s-pl').innerHTML =
+    '<option value="">— Seçin —</option>' +
+    playlists.map(p => `<option value="${p.id}" ${p.id === sel ? 'selected' : ''}>${esc(p.name)}</option>`).join('');
+}
+
+async function saveScreen() {
+  const name = document.getElementById('s-name').value.trim();
+  if (!name) { toast('Ekran adı boş olamaz'); return; }
+  const btn = document.getElementById('s-save-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Kaydediliyor';
+  try {
+    const r = await apiPost({
+      action: 'saveScreen',
+      id: editingScreen?.id || null,
+      name,
+      location: document.getElementById('s-loc').value.trim(),
+      playlistId: document.getElementById('s-pl').value || null
+    });
+    if (!r.ok) throw new Error(r.error);
+    closeModal('modal-screen');
+    await loadAll();
+    toast('Ekran kaydedildi ✓');
+  } catch (e) { toast('Hata: ' + e.message); }
+  btn.disabled = false; btn.textContent = 'Kaydet';
+}
+
+async function delScreen(id) {
+  if (!confirm('Bu ekranı silmek istediğinizden emin misiniz?')) return;
+  const r = await apiPost({ action: 'deleteScreen', id });
+  if (r.ok) { await loadAll(); toast('Ekran silindi'); }
+  else toast('Hata: ' + r.error);
+}
+
+function showUrl(id) {
+  const base = window.location.href.replace(/index\.html.*$/, '').replace(/\/$/, '');
+  currentUrl = `${base}/player.html?screen=${id}&api=${encodeURIComponent(API)}`;
+  document.getElementById('url-txt').textContent = currentUrl;
+  openModal('modal-url');
+}
+function copyUrl() { navigator.clipboard.writeText(currentUrl).then(() => toast('Kopyalandı ✓')); }
+
+// ── Playlists ─────────────────────────────────────────
+function renderPlaylists() {
+  const el = document.getElementById('playlists-list');
+  if (!playlists.length) {
+    el.innerHTML = `<div class="empty">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="10" x2="20" y2="10"/><line x1="4" y1="14" x2="14" y2="14"/></svg>
+      <p>Henüz playlist oluşturulmadı.</p>
+    </div>`;
+    return;
+  }
+  el.innerHTML = playlists.map(p => {
+    const usedBy = screens.filter(s => s.playlistId === p.id).map(s => s.name).join(', ');
+    return `<div class="pl-item">
+      <div class="pl-thumb"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg></div>
+      <div class="pl-details">
+        <div class="pl-name">${esc(p.name)}</div>
+        <div class="pl-sub">${usedBy ? '📺 ' + esc(usedBy) : 'Ekrana atanmadı'}</div>
+      </div>
+      <div class="pl-actions">
+        ${usedBy ? '<span class="badge badge-green">Aktif</span>' : '<span class="badge badge-gray">Pasif</span>'}
+        <button class="btn btn-ghost btn-sm" onclick="editPlaylist('${p.id}')">Düzenle</button>
+        <button class="btn btn-danger btn-sm" onclick="delPlaylist('${p.id}')">Sil</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openAddPlaylist() {
+  if (!checkApi()) return;
+  editingPlaylist = null;
+  document.getElementById('mp-title').textContent = 'Yeni Playlist';
+  document.getElementById('p-name').value = '';
+  document.getElementById('media-list').innerHTML = '';
+  addEntry();
+  openModal('modal-playlist');
+}
+
+async function editPlaylist(id) {
+  editingPlaylist = playlists.find(x => x.id === id);
+  document.getElementById('mp-title').textContent = 'Playlist\'i Düzenle';
+  document.getElementById('p-name').value = editingPlaylist.name;
+  document.getElementById('media-list').innerHTML = '';
+  try {
+    const r = await apiFetch('getPlaylistItems', { playlistId: id });
+    (r.data || []).forEach(item => addEntry(item));
+  } catch { addEntry(); }
+  openModal('modal-playlist');
+}
+
+function addEntry(item) {
+  const div = document.createElement('div');
+  div.className = 'media-entry';
+  div.innerHTML = `
+    <input class="fi" placeholder="https://… (SharePoint veya direkt URL)" value="${item ? esc(item.url) : ''}">
+    <input class="fi dur" type="number" min="1" placeholder="10" value="${item ? item.duration : '10'}">
+    <button class="del-btn" onclick="this.parentElement.remove()">×</button>`;
+  document.getElementById('media-list').appendChild(div);
+}
+
+async function savePlaylist() {
+  const name = document.getElementById('p-name').value.trim();
+  if (!name) { toast('Playlist adı boş olamaz'); return; }
+  const entries = [...document.querySelectorAll('#media-list .media-entry')];
+  const items = entries.map(e => {
+    const ins = e.querySelectorAll('input');
+    return { url: ins[0].value.trim(), duration: parseInt(ins[1].value) || 10 };
+  }).filter(i => i.url);
+  if (!items.length) { toast('En az bir içerik URL\'i girin'); return; }
+
+  const btn = document.getElementById('p-save-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Kaydediliyor';
+  try {
+    const r = await apiPost({
+      action: 'savePlaylist',
+      id: editingPlaylist?.id || null,
+      name, items
+    });
+    if (!r.ok) throw new Error(r.error);
+    closeModal('modal-playlist');
+    await loadAll();
+    toast('Playlist kaydedildi ✓');
+  } catch (e) { toast('Hata: ' + e.message); }
+  btn.disabled = false; btn.textContent = 'Kaydet';
+}
+
+async function delPlaylist(id) {
+  if (!confirm('Bu playlist\'i ve tüm içeriklerini silmek istediğinizden emin misiniz?')) return;
+  const r = await apiPost({ action: 'deletePlaylist', id });
+  if (r.ok) { await loadAll(); toast('Playlist silindi'); }
+  else toast('Hata: ' + r.error);
+}
+
+// ── Yardımcılar ───────────────────────────────────────
+function esc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function checkApi() {
+  if (!API) { toast('Önce Apps Script URL\'ini girin (sol altta)'); return false; }
+  return true;
+}
+
+// ── Init ──────────────────────────────────────────────
+if (API) loadAll();
+</script>
+</body>
+</html>
