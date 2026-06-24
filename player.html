@@ -55,7 +55,9 @@ body:hover #badge { opacity: 1; }
 // ── URL parametreleri ─────────────────────────────────
 const params = new URLSearchParams(location.search);
 const SCREEN_ID = params.get('screen');
-const API       = params.get('api') || localStorage.getItem('ds_api_url') || '';
+// API URL burada sabit — TV'ye sadece ?screen=scr_XXX yazmak yeterli
+const HARDCODED_API = 'https://script.google.com/macros/s/AKfycbyoH6VpT9ZaJli0xcLY9fPQrEuFUFE2TNmS9cmekSOrRB0Nwf71Iy5VcLrA10wZA5wQsw/exec';
+const API = params.get('api') || HARDCODED_API;
 
 // ── Durum ekranı ─────────────────────────────────────
 function showStatus(icon, msg, sub, showRetry) {
