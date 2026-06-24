@@ -527,7 +527,7 @@ async function saveScreen() {
       playlistId: document.getElementById('s-pl').value||''
     });
     if (!r.ok) throw new Error(r.error);
-    cm('m-screen'); await loadAll(); toast('Ekran kaydedildi','s');
+    cm('m-screen'); await new Promise(r=>setTimeout(r,800)); await loadAll(); toast('Ekran kaydedildi ✓','s');
   } catch(e) { toast('Hata: '+e.message,'e'); }
   btn.disabled=false; btn.textContent='Kaydet';
 }
@@ -625,7 +625,7 @@ async function savePl() {
       items: JSON.stringify(items)   // JSON string olarak gönder
     });
     if (!r.ok) throw new Error(r.error);
-    cm('m-pl'); await loadAll(); toast('Playlist kaydedildi','s');
+    cm('m-pl'); await new Promise(r=>setTimeout(r,800)); await loadAll(); toast('Playlist kaydedildi ✓','s');
   } catch(e) { toast('Hata: '+e.message,'e'); }
   btn.disabled=false; btn.textContent='Kaydet';
 }
