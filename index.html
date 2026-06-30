@@ -88,28 +88,35 @@
     });
   }
 
-  // Videoyu yerel önbelleğe indirir (yoksa indirir, varsa atlar) ve oynatılabilir bir blob URL döner
+  // Videoyu yerel önbelleğe indirir (yoksa indirir, varsa atlar) ve oynatılabilir bir URL döner
+  // Cache API desteklenmiyorsa (bazı eski Tizen tarayıcıları) direkt stream URL'ine geri döner
   async function getOfflineVideoUrl(videoUrl) {
-    const cache = await caches.open(CACHE_NAME);
-    let response = await cache.match(videoUrl);
+    // Cache API tarayıcıda yoksa direkt orijinal URL'i kullan (offline çalışmaz ama en azından video oynar)
+    if (!("caches" in window)) {
+      console.warn("Bu tarayıcı Cache API desteklemiyor, video doğrudan stream edilecek.");
+      return videoUrl;
+    }
 
-    if (!response) {
-      console.log("Video önbellekte yok, indiriliyor:", videoUrl);
-      try {
+    try {
+      const cache = await caches.open(CACHE_NAME);
+      let response = await cache.match(videoUrl);
+
+      if (!response) {
+        console.log("Video önbellekte yok, indiriliyor:", videoUrl);
         const networkResponse = await fetch(videoUrl);
         if (!networkResponse.ok) throw new Error("İndirme başarısız: " + networkResponse.status);
         await cache.put(videoUrl, networkResponse.clone());
         response = networkResponse;
-      } catch (err) {
-        console.error("Video indirilemedi, internet yok olabilir:", err);
-        return null;
+      } else {
+        console.log("Video önbellekten okunuyor (offline çalışır).");
       }
-    } else {
-      console.log("Video önbellekten okunuyor (offline çalışır).");
-    }
 
-    const blob = await response.blob();
-    return URL.createObjectURL(blob);
+      const blob = await response.blob();
+      return URL.createObjectURL(blob);
+    } catch (err) {
+      console.error("Önbellekleme başarısız, direkt stream'e geçiliyor:", err);
+      return videoUrl; // Cache API hata verirse direkt stream et
+    }
   }
 
   let aktifVideoUrl = null; // şu an oynayan video'nun orijinal (sunucu) URL'i
