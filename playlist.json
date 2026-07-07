@@ -1,0 +1,44 @@
+{
+  "updatedAt": "2026-07-07T12:00:00+03:00",
+  "deviceGroups": {
+    "default": { "name": "Varsayılan Grup", "playlistId": "playlist-ana" },
+    "lobi": { "name": "Lobi Ekranları", "playlistId": "playlist-ana" },
+    "magaza": { "name": "Mağaza Ekranları", "playlistId": "playlist-magaza" }
+  },
+  "playlists": {
+    "playlist-ana": {
+      "name": "Ana Oynatma Listesi",
+      "items": [
+        {
+          "id": "1",
+          "type": "image",
+          "src": "media/ornek-gorsel.jpg",
+          "duration": 10
+        },
+        {
+          "id": "2",
+          "type": "video",
+          "src": "media/ornek-video.mp4",
+          "muted": true
+        },
+        {
+          "id": "3",
+          "type": "web",
+          "src": "https://example.com",
+          "duration": 15
+        }
+      ]
+    },
+    "playlist-magaza": {
+      "name": "Mağaza Oynatma Listesi",
+      "items": [
+        {
+          "id": "1",
+          "type": "image",
+          "src": "media/ornek-gorsel.jpg",
+          "duration": 8
+        }
+      ]
+    }
+  }
+}

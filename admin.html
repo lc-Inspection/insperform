@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<title>Yayın Paneli — Signage Admin</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root {
+    --bg: #14171c;
+    --panel: #1b1f27;
+    --panel-2: #20242e;
+    --line: #2a2f3a;
+    --text: #e6e9ee;
+    --muted: #838d9c;
+    --accent: #ff8a3d;
+    --accent-dim: #7a4a26;
+    --ok: #35d07f;
+    --danger: #ff5c5c;
+    --mono: "SF Mono", "Cascadia Code", Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, "Segoe UI", Arial, sans-serif;
+    min-height: 100vh;
+  }
+  a { color: var(--accent); }
+
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--line);
+    background: var(--panel);
+  }
+  .brand {
+    display: flex; align-items: center; gap: 10px;
+    font-family: var(--mono);
+    letter-spacing: .5px;
+  }
+  .brand .tally {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--muted);
+  }
+  .brand .tally.live { background: var(--ok); box-shadow: 0 0 8px var(--ok); animation: pulse 1.8s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
+  .brand b { font-size: 15px; font-weight: 700; }
+  .brand span { color: var(--muted); font-size: 12px; }
+
+  #connBtn {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--muted);
+    padding: 7px 14px;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  #connBtn:hover { border-color: var(--accent); color: var(--text); }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    min-height: calc(100vh - 61px);
+  }
+
+  nav.groups {
+    border-right: 1px solid var(--line);
+    padding: 18px 14px;
+    background: var(--panel);
+  }
+  nav.groups h3 {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 1.2px;
+    color: var(--muted); margin: 4px 8px 12px;
+  }
+  .group-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 10px;
+    border-radius: 6px;
+    margin-bottom: 4px;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 13.5px;
+  }
+  .group-item:hover { background: var(--panel-2); color: var(--text); }
+  .group-item.active {
+    background: var(--panel-2);
+    color: var(--text);
+    border-left: 2px solid var(--accent);
+  }
+  .group-item .gname { display: flex; flex-direction: column; gap: 2px; }
+  .group-item .gid { font-family: var(--mono); font-size: 10.5px; color: var(--muted); }
+  #addGroupBtn {
+    width: 100%; margin-top: 8px;
+    padding: 9px; border-radius: 6px;
+    background: transparent; border: 1px dashed var(--line);
+    color: var(--muted); font-size: 12.5px; cursor: pointer;
+  }
+  #addGroupBtn:hover { color: var(--accent); border-color: var(--accent-dim); }
+
+  main {
+    padding: 24px 32px;
+    max-width: 900px;
+  }
+  .playlist-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 18px;
+  }
+  .playlist-head h2 { font-size: 19px; margin: 0; }
+  .playlist-head .meta { font-family: var(--mono); font-size: 11.5px; color: var(--muted); }
+
+  #cueList { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+
+  .cue {
+    display: grid;
+    grid-template-columns: 34px 90px 1fr 90px auto;
+    align-items: center;
+    gap: 10px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+  .cue .num {
+    font-family: var(--mono); color: var(--accent);
+    font-size: 13px; text-align: center;
+  }
+  .cue select, .cue input {
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    color: var(--text);
+    border-radius: 5px;
+    padding: 7px 8px;
+    font-size: 12.5px;
+    width: 100%;
+  }
+  .cue .src-row { display: flex; gap: 6px; }
+  .cue .src-row input { flex: 1; }
+  .cue .uploadBtn {
+    font-size: 11px; padding: 7px 9px;
+    background: var(--panel-2); border: 1px solid var(--line);
+    color: var(--muted); border-radius: 5px; cursor: pointer; white-space: nowrap;
+  }
+  .cue .uploadBtn:hover { color: var(--accent); }
+  .cue .btns { display: flex; gap: 4px; }
+  .cue .btns button {
+    background: transparent; border: 1px solid var(--line);
+    color: var(--muted); border-radius: 5px; width: 26px; height: 26px;
+    cursor: pointer; font-size: 12px;
+  }
+  .cue .btns button:hover { color: var(--text); border-color: var(--accent-dim); }
+  .cue .btns button.del:hover { color: var(--danger); border-color: var(--danger); }
+
+  #addCueBtn {
+    padding: 10px 16px; border-radius: 6px;
+    background: var(--panel); border: 1px dashed var(--line);
+    color: var(--muted); font-size: 13px; cursor: pointer;
+  }
+  #addCueBtn:hover { color: var(--accent); border-color: var(--accent-dim); }
+
+  .actions {
+    display: flex; gap: 10px; margin-top: 22px;
+    padding-top: 18px; border-top: 1px solid var(--line);
+  }
+  .actions button {
+    padding: 10px 18px; border-radius: 6px; font-size: 13.5px;
+    border: none; cursor: pointer; font-weight: 600;
+  }
+  #publishBtn { background: var(--accent); color: #1a1300; }
+  #publishBtn:hover { filter: brightness(1.08); }
+  #tvUrlBtn { background: transparent; border: 1px solid var(--line) !important; color: var(--text); }
+
+  #log {
+    margin-top: 18px;
+    font-family: var(--mono); font-size: 11.5px;
+    color: var(--muted);
+    background: #0f1116;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 10px 12px;
+    max-height: 140px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+  }
+  #log .ok { color: var(--ok); }
+  #log .err { color: var(--danger); }
+
+  /* Modal */
+  .modal-backdrop {
+    position: fixed; inset: 0; background: rgba(0,0,0,.6);
+    display: none; align-items: center; justify-content: center; z-index: 50;
+  }
+  .modal-backdrop.show { display: flex; }
+  .modal {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 10px; padding: 22px; width: 420px;
+  }
+  .modal h3 { margin-top: 0; font-size: 15px; }
+  .modal label { display: block; font-size: 12px; color: var(--muted); margin: 12px 0 5px; }
+  .modal input { width: 100%; padding: 9px 10px; background: var(--panel-2);
+    border: 1px solid var(--line); border-radius: 6px; color: var(--text); font-size: 13px; }
+  .modal .row { display: flex; gap: 10px; margin-top: 18px; }
+  .modal button { flex: 1; padding: 10px; border-radius: 6px; border: none; cursor: pointer; font-weight: 600; }
+  .modal .primary { background: var(--accent); color: #1a1300; }
+  .modal .secondary { background: transparent; border: 1px solid var(--line) !important; color: var(--muted); }
+  .modal p.hint { font-size: 11.5px; color: var(--muted); line-height: 1.5; margin-top: 14px; }
+  .modal code { font-family: var(--mono); background: var(--panel-2); padding: 1px 5px; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="tally" id="tally"></div>
+    <b>YAYIN PANELİ</b>
+    <span id="repoLabel">bağlı repo yok</span>
+  </div>
+  <button id="connBtn">GitHub Bağlantısı</button>
+</header>
+
+<div class="layout">
+  <nav class="groups">
+    <h3>Cihaz Grupları</h3>
+    <div id="groupList"></div>
+    <button id="addGroupBtn">+ Yeni grup</button>
+  </nav>
+
+  <main>
+    <div class="playlist-head">
+      <h2 id="playlistTitle">—</h2>
+      <div class="meta" id="playlistMeta"></div>
+    </div>
+
+    <div id="cueList"></div>
+    <button id="addCueBtn">+ İçerik ekle</button>
+
+    <div class="actions">
+      <button id="publishBtn">Yayınla (GitHub'a kaydet)</button>
+      <button id="tvUrlBtn">TV Bağlantı URL'si</button>
+    </div>
+
+    <div id="log">Bağlantı bekleniyor…</div>
+  </main>
+</div>
+
+<!-- Repo bağlantı modalı -->
+<div class="modal-backdrop" id="connModal">
+  <div class="modal">
+    <h3>GitHub Reposuna Bağlan</h3>
+    <label>Kullanıcı adı / organizasyon</label>
+    <input id="inOwner" placeholder="orn: sirketiniz" />
+    <label>Repo adı</label>
+    <input id="inRepo" placeholder="orn: tv-signage" />
+    <label>Branch</label>
+    <input id="inBranch" placeholder="main" value="main" />
+    <label>Personal Access Token (contents: write yetkili)</label>
+    <input id="inToken" type="password" placeholder="github_pat_..." />
+    <p class="hint">
+      Token yalnızca bu tarayıcıda <code>localStorage</code>'da saklanır, başka bir yere gönderilmez.
+      GitHub → Settings → Developer settings → Fine-grained tokens üzerinden
+      sadece bu repo için <code>Contents: Read and write</code> izniyle oluşturmanız önerilir.
+    </p>
+    <div class="row">
+      <button class="secondary" id="connCancel">Vazgeç</button>
+      <button class="primary" id="connSave">Bağlan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Grup ekleme modalı -->
+<div class="modal-backdrop" id="groupModal">
+  <div class="modal">
+    <h3>Yeni Cihaz Grubu</h3>
+    <label>Grup kimliği (TV URL'sinde kullanılır, boşluksuz)</label>
+    <input id="inGroupId" placeholder="orn: magaza-2" />
+    <label>Görünen ad</label>
+    <input id="inGroupName" placeholder="orn: Mağaza 2 Ekranları" />
+    <div class="row">
+      <button class="secondary" id="groupCancel">Vazgeç</button>
+      <button class="primary" id="groupSave">Oluştur</button>
+    </div>
+  </div>
+</div>
+
+<!-- TV URL modalı -->
+<div class="modal-backdrop" id="tvModal">
+  <div class="modal">
+    <h3>TV'ye Yazılacak Adres</h3>
+    <label>GitHub Pages temel adresiniz</label>
+    <input id="inPagesBase" placeholder="https://kullanici.github.io/repo" />
+    <p class="hint" id="tvUrlResult" style="font-family: var(--mono); color: var(--text); word-break: break-all;"></p>
+    <div class="row">
+      <button class="secondary" id="tvCancel">Kapat</button>
+      <button class="primary" id="tvCopy">Kopyala</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="fileInput" style="display:none" accept="image/*,video/*" />
+
+<script src="admin.js"></script>
+</body>
+</html>
