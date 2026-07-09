@@ -637,8 +637,30 @@ const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbzrARAnKp2iq
 // Apps Script'i kullanmaya devam eder — bu kademeli, güvenli bir geçiştir.
 const PHP_PERFORMANS_API_URL = 'https://fantaktik.com/kalibre-api/api.php';
 const DEFAULT_API_TOKEN  = 'lcw-secret-2024';
+
+// ─── GOOGLE SHEETS TAMAMEN DEVRE DIŞI (kullanıcı talebiyle) ───
+// true olduğu sürece, Performans verisi HARİÇ (o zaten yukarıdaki
+// PHP_PERFORMANS_API_URL üzerinden, Sheets'e hiç dokunmadan çalışıyor),
+// TÜM Google Apps Script/Sheets bağlantı denemeleri (config/şifre çekme,
+// klasman otomatik çekme, kullanıcı girişi, kayıp zaman, teknik inceleme,
+// ekip senkronizasyonu vb.) baştan engellenir — hiçbir jsonpFetch çağrısı
+// artık Sheets'e gitmez. Sheets'e geri dönmek istenirse sadece bu satırı
+// false yapmak yeterli, başka hiçbir yeri değiştirmeye gerek yok.
+const SHEETS_DEVRE_DISI = true;
+
+// ─── SABİT ADMİN ŞİFRESİ (kullanıcı talebiyle) ───
+// ESKİDEN şifre HİÇBİR ZAMAN kodda saklanmıyordu — her girişte Sheets Config
+// sekmesinden çekiliyordu (appConfig.password her zaman '' ile başlıyordu).
+// Sheets artık tamamen devre dışı bırakıldığı için şifrenin bir yerde sabit
+// olarak tanımlı olması gerekiyor. Değiştirmek istersen sadece bu satırı
+// düzenle (panelin içinden "şifre değiştir" yapıldığında da bu değer değil,
+// tarayıcının localStorage'ındaki önbellek güncellenir — kalıcı olarak
+// değiştirmek için en güvenilir yol burayı elle güncelleyip yeniden
+// yayınlamaktır).
+const SABIT_ADMIN_SIFRESI = 'kalibre2026';
+
 let appConfig = {
-  password: '',          // Panel admin şifresi — Sheets Config'ten yüklenir, kodda saklanmaz
+  password: SABIT_ADMIN_SIFRESI,
   sheetsWebAppUrl: DEFAULT_SHEETS_URL,
   sheetsViewUrl: '',
   sheetsApiToken: DEFAULT_API_TOKEN,
@@ -674,6 +696,7 @@ const _isNewDevice = !localStorage.getItem(APP_CONFIG_KEY);
 // ─── CONFIG SHEETS ENTEGRASYONU ───
 // Şifre ve ayarları Sheets'teki "Config" sekmesine push/pull eder
 async function pushConfigToSheets() {
+  if (SHEETS_DEVRE_DISI) return;
   const url = appConfig.sheetsWebAppUrl;
   const token = appConfig.sheetsApiToken;
   if (!url || !token) return;
@@ -717,6 +740,19 @@ async function pushConfigToSheets() {
 // X-Frame-Options'tan HİÇ etkilenmez (o başlık sadece iframe/frame gömülmesini
 // kısıtlar, script yüklemesini değil) — bu yüzden çok daha sağlam.
 function jsonpFetch(url, params) {
+  // ── GOOGLE SHEETS TAMAMEN DEVRE DIŞI (kullanıcı talebiyle) ──────────────
+  // Kodun 25 farklı yerinden çağrılabiliyor; her birini tek tek engellemek
+  // yerine burada, TEK bir merkezi noktada durduruluyor. Böylece hangi
+  // özellik (Kayıp Zaman, Teknik İnceleme, Klasmanlar, Kullanıcılar vb.)
+  // bu fonksiyonu çağırırsa çağırsın, artık script.google.com'a HİÇBİR
+  // istek gitmiyor — 25 saniye beklemek yerine ANINDA (ve sessizce,
+  // konsola bir uyarı düşerek) başarısız olur. Sheets'e geri dönmek
+  // istenirse SHEETS_DEVRE_DISI'yi false yapmak yeterli.
+  if (SHEETS_DEVRE_DISI) {
+    console.warn(`⛔ jsonpFetch engellendi (Sheets devre dışı) — action: ${params?.action || '?'}`);
+    return Promise.reject(new Error('Google Sheets bağlantısı devre dışı bırakıldı.'));
+  }
+
   const action = params.action || '';
   const token  = params.token  || '';
   // Her çağrıya benzersiz bir kimlik üretilir — hem rid (eşzamanlı isteklerin
@@ -781,6 +817,7 @@ function jsonpFetch(url, params) {
 }
 
 async function pullConfigFromSheets() {
+  if (SHEETS_DEVRE_DISI) return false;
   const url = appConfig.sheetsWebAppUrl;
   const token = appConfig.sheetsApiToken;
   if (!url || !token) return false;
@@ -808,6 +845,24 @@ localStorage.setItem(APP_CONFIG_KEY, JSON.stringify(appConfig));
 
 // ─── İLK AÇILIŞTA OTOMATİK VERİ ÇEK ───
 async function autoFetchOnStartup() {
+  // SHEETS_DEVRE_DISI iken: config/klasman/teknik inceleme/kayıp zaman/ekip
+  // senkronizasyonu gibi Sheets'e bağımlı TÜM otomatik çekmeler tamamen
+  // atlanır. SADECE performans verisi çekilir — o da artık Sheets'e değil,
+  // PHP_PERFORMANS_API_URL'e (cPanel/MySQL) gider (pullPerformansFromSheets
+  // içinde zaten bu ayrım otomatik yapılıyor, burada tekrar yazmaya gerek yok).
+  if (SHEETS_DEVRE_DISI) {
+    if (!PHP_PERFORMANS_API_URL) return; // hiçbir kaynak yapılandırılmamışsa sessizce çık
+    showStartupBanner('📥 Performans verisi çekiliyor...');
+    try {
+      await pullPerformansFromSheets(true); // silent=true — kendi render/saveData işlemlerini de yapar
+      showStartupBanner(`✅ Performans verisi güncellendi (${performansData.length} inspector)`, 'success');
+    } catch(e) {
+      console.warn('Performans otomatik çekme hatası:', e.message);
+      hideStartupBanner();
+    }
+    return;
+  }
+
   const url = appConfig.sheetsWebAppUrl;
   const token = appConfig.sheetsApiToken;
   if (!url || !token) return;
@@ -933,6 +988,9 @@ function loadConfig() {
   // Her zaman HTML içindeki sabit URL kullan (farklı bilgisayarda da değişmez)
   appConfig.sheetsWebAppUrl = DEFAULT_SHEETS_URL;
   if (!appConfig.sheetsApiToken) appConfig.sheetsApiToken = DEFAULT_API_TOKEN;
+  // Sheets devre dışıyken şifre HER ZAMAN sabit değerden gelir — localStorage'da
+  // önceki bir Sheets bağlantısından kalmış farklı bir şifre varsa görmezden gelinir.
+  if (SHEETS_DEVRE_DISI) appConfig.password = SABIT_ADMIN_SIFRESI;
   // UI'ya yansıt
   const wuEl = document.getElementById('sheets-webapp-url');
   const vuEl = document.getElementById('sheets-view-url');
@@ -1179,6 +1237,10 @@ async function checkPassword() {
 
   // ── Kullanıcı adı girildiyse (admin dışı) → normal kullanıcı girişi ──
   if (userVal && userVal.toLowerCase() !== 'admin') {
+    if (SHEETS_DEVRE_DISI) {
+      _fail('⚠️ Ekip yöneticisi girişi şu anda kullanılamıyor (Google Sheets bağlantısı kapatıldı). Lütfen admin olarak giriş yapın.');
+      return;
+    }
     if (!url || !token) {
       _fail('⚠️ Sunucu bağlantısı yapılandırılmamış.');
       return;
@@ -1201,6 +1263,16 @@ async function checkPassword() {
 
   // ── Admin girişi (tek admin şifresi) ──
   const adminUser = { username: 'admin', isAdmin: true, tabs: 'all' };
+
+  // SHEETS_DEVRE_DISI iken Apps Script'e HİÇ gidilmez — doğrudan sabit/önbellek
+  // şifresiyle karşılaştırılır (bkz. SABIT_ADMIN_SIFRESI, en üstte tanımlı).
+  if (SHEETS_DEVRE_DISI) {
+    if (val === appConfig.password) { _unlock(adminUser); return; }
+    _fail((translations[currentLang]||translations.tr).pw_wrong);
+    document.getElementById('pw-input').value = '';
+    document.getElementById('pw-input').focus();
+    return;
+  }
 
   // ── 1. Sheets'ten şifreyi çekmeye çalış (20s timeout) ──
   if (url && token) {
@@ -1297,6 +1369,7 @@ function changePwPrompt() {
 // kendi Users sekmesindeki şifresi güncellenir.
 function changeMyPasswordPrompt() {
   if (!currentUser || currentUser.isAdmin) { changePwPrompt(); return; }
+  if (SHEETS_DEVRE_DISI) { alert('⚠️ Ekip yöneticisi şifre değişikliği şu anda kullanılamıyor (Google Sheets bağlantısı kapatıldı).'); return; }
 
   const current = prompt('Mevcut şifrenizi girin:');
   if (!current) return;
@@ -1338,6 +1411,7 @@ function changeMyPasswordPrompt() {
 // GOOGLE SHEETS ENTEGRASYONU
 // ────────────────────────────
 async function pushToSheets() {
+  if (SHEETS_DEVRE_DISI) { alert('⚠️ Google Sheets bağlantısı devre dışı bırakıldı — klasmanlar sadece yerelde (tarayıcınızda) kaydediliyor.'); return; }
   const url = appConfig.sheetsWebAppUrl;
   if (!url) {
     alert('⚠️ Önce Google Apps Script Web App URL\'ini girin!\n\nKlasman Yönetimi → Bağlantı Ayarları bölümüne URL yapıştırın.');
@@ -1972,6 +2046,7 @@ async function pullFromSheets() {
 // Excel yüklendiğinde otomatik çağrılır
 // ─────────────────────────────────────────────
 async function pushPerformansToSheets(liste) {
+  if (SHEETS_DEVRE_DISI) return;
   const url = appConfig.sheetsWebAppUrl;
   const token = appConfig.sheetsApiToken;
   if (!url || !token) return; // Bağlantı ayarı yapılmamışsa sessizce çık
@@ -2017,6 +2092,7 @@ async function pushPerformansToSheets(liste) {
 // Tam JSON — farklı bilgisayarlardan çekilebilir
 // ─────────────────────────────────────────────
 async function pushPerformansRawToSheets(liste) {
+  if (SHEETS_DEVRE_DISI) return;
   const url   = appConfig.sheetsWebAppUrl;
   const token = appConfig.sheetsApiToken;
   if (!url || !token) return;
@@ -2074,6 +2150,7 @@ const listeTemiz = liste.map(inspector => {
 // Google Sheets > InspectorKayitlar sekmesi (v5.3)
 // ─────────────────────────────────────────────
 async function pushInspectorKayitlarToSheets(liste, url, token) {
+  if (SHEETS_DEVRE_DISI) return;
   if (!url || !token || !liste || !liste.length) return;
   let gonderilen = 0;
   for (const inspector of liste) {
@@ -2429,6 +2506,9 @@ async function pushPerformansManual(ev) {
       console.log('✅ Performans verisi cPanel/MySQL\u2019e gönderildi:', resp.count, 'inspector');
     } else {
       // ── ESKİ YOL: Google Apps Script / Sheets (artık kullanılmıyor, geriye dönük) ──
+      // PHP_PERFORMANS_API_URL her zaman dolu olduğundan bu dal normalde hiç
+      // çalışmaz; SHEETS_DEVRE_DISI kontrolü ek bir güvenlik katmanıdır.
+      if (SHEETS_DEVRE_DISI) throw new Error('Google Sheets bağlantısı devre dışı bırakıldı.');
       const _rowsHedef = Math.max(1, parseFloat(document.getElementById('inp-verimlilik')?.value) || 100);
       const rows = performansData.map(row => ({
         ins: row.ins,
@@ -2971,7 +3051,7 @@ async function clearDashboardData() {
   renderTopInspectors();
 
   // ── Sheets temizle ────────────────────────────────────────────────────────
-  if (url && token) {
+  if (!SHEETS_DEVRE_DISI && url && token) {
     try {
       await fetch(url, {
         method: 'POST',
@@ -4668,6 +4748,7 @@ function autoSaveAndPushKlasmanlar() {
   saveData();
   clearTimeout(_klasmanPushTimer);
   _klasmanPushTimer = setTimeout(() => {
+    if (SHEETS_DEVRE_DISI) return;
     const url   = appConfig.sheetsWebAppUrl;
     const token = appConfig.sheetsApiToken;
     if (!url || !token) return;
@@ -7763,6 +7844,7 @@ console.log(`📊 ${klasmanlar.length} klasman, ${performansData.length} inspect
 // ════════════════════════════════════════════════════════════════════
 
 async function pushKlasmanAnalizToSheets(liste) {
+  if (SHEETS_DEVRE_DISI) return;
   const url   = appConfig.sheetsWebAppUrl;
   const token = appConfig.sheetsApiToken;
   if (!url || !token || !liste || !liste.length) return;
@@ -8124,6 +8206,7 @@ async function deleteUserConfirm(username) {
 // Şifre alanı sadece yeni belirlenmişse doldurulur; aksi halde boş bırakılır
 // ve sunucu mevcut şifreyi korur (bkz. _writeUsers, panel-v1-gs).
 async function _pushUsersToSheets() {
+  if (SHEETS_DEVRE_DISI) { alert('⚠️ Google Sheets bağlantısı devre dışı bırakıldı — kullanıcı yönetimi şu anda kullanılamıyor.'); return; }
   const url   = appConfig.sheetsWebAppUrl;
   const token = appConfig.sheetsApiToken;
   if (!url || !token) { alert('⚠️ Google Sheets bağlantısı yapılandırılmamış!'); return; }
@@ -8522,6 +8605,7 @@ async function removeFromTeam(name) {
 
 // currentUser.team listesini Sheets'teki Users sayfasına gönderir (tek satır günceller).
 async function _pushTeamToSheets() {
+  if (SHEETS_DEVRE_DISI) return;
   const url   = appConfig.sheetsWebAppUrl;
   const token = appConfig.sheetsApiToken;
   if (!url || !token || !currentUser) return;
@@ -8761,6 +8845,7 @@ async function saveKayipZaman() {
 
   const url = appConfig.sheetsWebAppUrl;
   const token = appConfig.sheetsApiToken;
+  if (SHEETS_DEVRE_DISI) { alert('⚠️ Kayıp Zaman modülü şu anda kullanılamıyor (Google Sheets bağlantısı kapatıldı).'); return; }
   if (!url) { alert('Sheets bağlantısı yapılandırılmamış.'); return; }
 
   const record = {
@@ -10388,6 +10473,7 @@ function onTiBaglamDegisti() {
 
 // ─── Kriterleri Çek ───
 async function fetchTeknikKriterler() {
+  if (SHEETS_DEVRE_DISI) return;
   const url = appConfig.sheetsWebAppUrl;
   const token = appConfig.sheetsApiToken;
   if (!url) return;
@@ -10880,6 +10966,7 @@ async function kaydetTeknikKriterler() {
 
   const url = appConfig.sheetsWebAppUrl;
   const token = appConfig.sheetsApiToken;
+  if (SHEETS_DEVRE_DISI) { alert('⚠️ Google Sheets bağlantısı devre dışı bırakıldı — Teknik İnceleme kriterleri şu anda kaydedilemiyor.'); return; }
   if (!url || !token) { alert('⚠️ Google Sheets bağlantısı yapılandırılmamış!'); return; }
 
   const btn = document.getElementById('ti-kriter-save-btn');
