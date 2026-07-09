@@ -649,15 +649,15 @@ const DEFAULT_API_TOKEN  = 'lcw-secret-2024';
 // değiştirmemek için isim korundu.
 const SHEETS_DEVRE_DISI = false;
 
-// ─── SABİT ADMİN ŞİFRESİ (ilk kurulum / PHP'ye hiç ulaşılamazsa yedek) ───
-// Normal akışta şifre artık PHP'deki (kv_store) config kaydından okunur —
-// admin "Şifre Değiştir" yaptığında bu kayıt güncellenir ve gerçek şifre
-// olarak kullanılmaya devam eder. Bu sabit sadece PHP'ye hiç ulaşılamadığı
-// ilk açılışta veya bağlantı sorunu yaşandığında yedek/varsayılan değerdir.
-const SABIT_ADMIN_SIFRESI = 'kalibre2026';
+// ─── ADMİN ŞİFRESİ ARTIK KODDA YOK ───
+// Şifre, kodun içinde SAKLANMAZ — her girişte PHP backend'inden (kv_store
+// 'config' kaydı) çekilir. Panel içinden "Şifre Değiştir" yapıldığında bu
+// kayıt güncellenir; kaynak kodda hiçbir zaman gerçek şifre görünmez.
+// (Bir kerelik ilk kurulum için veritabanına şifre yazma adımı gerekir —
+// ayrıca sağlanan SQL komutuyla yapılır.)
 
 let appConfig = {
-  password: SABIT_ADMIN_SIFRESI,
+  password: '',
   sheetsWebAppUrl: PHP_API_URL,
   sheetsViewUrl: '',
   sheetsApiToken: DEFAULT_API_TOKEN,
@@ -934,11 +934,9 @@ function loadConfig() {
   // Her zaman PHP API URL'ini kullan (farklı bilgisayarda da değişmez)
   appConfig.sheetsWebAppUrl = PHP_API_URL;
   if (!appConfig.sheetsApiToken) appConfig.sheetsApiToken = DEFAULT_API_TOKEN;
-  // Şifre artık localStorage'daki önbellekten (varsa) veya yukarıdaki sabit
-  // yedek değerden gelir; checkPassword() içinde PHP'den (kv_store config)
-  // gerçek şifre başarıyla çekilirse appConfig.password OTOMATİK güncellenir
-  // ve localStorage'a yazılır — burada zorla ezilmez.
-  if (!appConfig.password) appConfig.password = SABIT_ADMIN_SIFRESI;
+  // Şifre artık SADECE localStorage'daki önbellekten (varsa, en son PHP'den
+  // başarıyla çekilen değer) veya checkPassword() içinde PHP'den (kv_store
+  // config) anlık çekilen değerden gelir — kodda sabit bir yedek YOKTUR.
   // UI'ya yansıt
   const wuEl = document.getElementById('sheets-webapp-url');
   const vuEl = document.getElementById('sheets-view-url');
@@ -1212,8 +1210,9 @@ async function checkPassword() {
   // ── Admin girişi (tek admin şifresi) ──
   const adminUser = { username: 'admin', isAdmin: true, tabs: 'all' };
 
-  // SHEETS_DEVRE_DISI iken Apps Script'e HİÇ gidilmez — doğrudan sabit/önbellek
-  // şifresiyle karşılaştırılır (bkz. SABIT_ADMIN_SIFRESI, en üstte tanımlı).
+  // SHEETS_DEVRE_DISI şu an "false" olduğu için bu blok ÇALIŞMIYOR (aşağıdaki
+  // gerçek PHP tabanlı akış kullanılıyor) — geçmiş bir aşamanın izi olarak
+  // duruyor, silinmedi.
   if (SHEETS_DEVRE_DISI) {
     if (val === appConfig.password) { _unlock(adminUser); return; }
     _fail((translations[currentLang]||translations.tr).pw_wrong);
@@ -10623,30 +10622,30 @@ function yazdirTeknikIncelemeSonucu() {
 <meta charset="UTF-8">
 <title>Teknik İnceleme Değerlendirme Formu - ${_escapeHtml(inspectorAd)}</title>
 <style>
-  @page { size: A4; margin: 8mm; }
+  @page { size: A4; margin: 12mm; }
   * { box-sizing: border-box; }
-  body { font-family: Arial, sans-serif; color: #000; margin: 0; padding: 0; font-size: 9.5px; line-height: 1.2; }
-  .ti-pr-title { text-align:center; font-size:13px; font-weight:700; margin-bottom:6px; text-transform:uppercase; letter-spacing:.3px; }
+  body { font-family: Arial, sans-serif; color: #000; margin: 0; padding: 0; font-size: 11px; line-height: 1.35; }
+  .ti-pr-title { text-align:center; font-size:17px; font-weight:700; margin-bottom:12px; text-transform:uppercase; letter-spacing:.4px; }
   table { border-collapse: collapse; width: 100%; }
-  .ti-pr-info td { border: 1px solid #000; padding: 2px 5px; font-size: 9.5px; vertical-align: middle; line-height:1.15; }
+  .ti-pr-info td { border: 1px solid #000; padding: 6px 9px; font-size: 11.5px; vertical-align: middle; line-height:1.3; }
   .ti-pr-info .lbl { font-weight: 700; width: 19%; background:#F2F2F2; }
   .ti-pr-info .val { width: 31%; }
-  .ti-pr-main { margin-top: 6px; }
-  .ti-pr-main th { border: 1px solid #000; background:#F2F2F2; font-weight:700; font-size:9px; padding:3px 4px; text-align:center; }
-  .ti-pr-main td { border: 1px solid #000; padding: 1.5px 4px; font-size: 9px; vertical-align: middle; line-height:1.15; }
+  .ti-pr-main { margin-top: 14px; }
+  .ti-pr-main th { border: 1px solid #000; background:#F2F2F2; font-weight:700; font-size:11px; padding:7px 5px; text-align:center; }
+  .ti-pr-main td { border: 1px solid #000; padding: 6px 7px; font-size: 11px; vertical-align: middle; line-height:1.35; }
   .ti-pr-no { text-align:center; font-weight:700; width:4%; }
   .ti-pr-alt { text-align:center; font-weight:700; width:3%; }
   .ti-pr-desc { text-align:left; }
   .ti-pr-tick { text-align:center; width:5%; font-weight:700; }
   .ti-pr-puan { text-align:center; width:6%; font-weight:700; }
-  .ti-pr-olay { width:18%; font-size:8.5px; }
+  .ti-pr-olay { width:18%; font-size:10px; }
   .ti-pr-grouprow td { background:#EAEAEA; font-weight:700; }
-  .ti-pr-total td { border: 1px solid #000; padding:3px 6px; font-weight:700; font-size:10px; }
+  .ti-pr-total td { border: 1px solid #000; padding:10px 12px; font-weight:700; font-size:14px; }
   .ti-pr-total .lbl { text-align:right; background:#F2F2F2; }
   .ti-pr-total .val { text-align:center; width:10%; }
-  .ti-pr-sign { margin-top:8px; }
-  .ti-pr-sign td { border: 1px solid #000; padding:4px; text-align:center; font-weight:600; height: 46px; vertical-align: top; width:50%; font-size:9.5px; }
-  .ti-pr-note { margin-top:3px; font-size:8.5px; font-style:italic; }
+  .ti-pr-sign { margin-top:22px; }
+  .ti-pr-sign td { border: 1px solid #000; padding:12px; text-align:center; font-weight:600; height: 100px; vertical-align: top; width:50%; font-size:11.5px; }
+  .ti-pr-note { margin-top:10px; font-size:10.5px; font-style:italic; }
   @media print {
     .ti-pr-noprint { display:none; }
   }
@@ -10812,9 +10811,19 @@ async function kaydetTeknikInceleme() {
     });
     saveTeknikIncelemeToLocalStorage();
     if (msg) { msg.style.display = ''; setTimeout(() => { msg.style.display = 'none'; }, 3000); }
+    // Kaydettikten sonra Talep No'yu temizle ve kriter listesini AÇIKÇA gizle
+    // (kullanıcı talebiyle) — jenerik "önce talep no seçin" yerine, az önce
+    // kaydedildiğini netçe belirten bir onay mesajı gösterilir.
     const talepInp = document.getElementById('ti-talep-secili');
     if (talepInp) talepInp.value = '';
-    renderTeknikKriterForm();
+    const kriterWrap = document.getElementById('ti-kriter-list');
+    if (kriterWrap) {
+      kriterWrap.innerHTML = `<div class="empty" style="padding:20px">
+        <div class="empty-icon">✅</div>
+        <h3>Değerlendirme kaydedildi!</h3>
+        <p>Yeni bir değerlendirme için yukarıdan Talep No girin</p>
+      </div>`;
+    }
     renderTiSkorOzet();
     if (!currentUser || currentUser.isAdmin) renderTiKayitlarTablo();
     // Dashboard kartlarında da güncel görünsün
