@@ -10593,7 +10593,9 @@ function yazdirTeknikIncelemeSonucu() {
 
   const inspectorAd = _formatDisplayName(inspector);
   const tarihStr = tarih ? new Date(tarih + 'T00:00:00').toLocaleDateString('tr-TR') : '';
-  const degerlendirenAd = (currentUser && currentUser.username && currentUser.username.toLowerCase() !== 'admin')
+  // Formu dolduran kullanıcının adı — admin dahil HER ZAMAN gösterilir
+  // (eskiden admin ise boş bırakılıyordu, kullanıcı talebiyle kaldırıldı).
+  const degerlendirenAd = (currentUser && currentUser.username)
     ? _formatDisplayName(currentUser.username) : '';
 
   let bodyRows = '';
@@ -10656,7 +10658,7 @@ function yazdirTeknikIncelemeSonucu() {
   <table class="ti-pr-info">
     <tr>
       <td class="lbl">Inspektör</td><td class="val">${_escapeHtml(inspectorAd)}</td>
-      <td class="lbl">Ekip Yöneticisi</td><td class="val">${_escapeHtml(degerlendirenAd)}</td>
+      <td class="lbl">Teknik Değerlendirme Uzmanı</td><td class="val">${_escapeHtml(degerlendirenAd)}</td>
     </tr>
     <tr>
       <td class="lbl">İnspection Tarihi</td><td class="val">${_escapeHtml(tarihStr)}</td>
