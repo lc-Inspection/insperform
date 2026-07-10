@@ -5407,8 +5407,23 @@ function renderPerfTabloFromData(page) {
 
   const ortPerformans = performansData.length > 0
     ? Math.round(performansData.reduce((s, r) => s + (r.genelHizPerf ?? 0), 0) / performansData.length) : 0;
+  // "Ne ödül ne ceza": nötr kayıp zaman düşülmüş ham performans, CANLI Hedef
+  // (inp-verimlilik) ile ölçeklenir — Dashboard kartlarındaki mantıkla aynı
+  // (getDispPerf çağırmıyoruz çünkü o, inspector.hedefVerimlilik'teki olası
+  // ESKİ/durağan hedefi kullanır; burada kullanıcının O AN girdiği hedef
+  // canlı yansımalı).
+  const _hamPerfDuzeltilmis = (r) => {
+    const standartSn = r.standartSure || 0;
+    let mesaiSn = r.mesaiSure || 0;
+    const notrKayipSn = getNotrKayipDakikaForInspector(r.ins) * 60;
+    if (notrKayipSn > 0 && mesaiSn > notrKayipSn) mesaiSn -= notrKayipSn;
+    return (standartSn > 0 && mesaiSn > 0) ? Math.round((standartSn / mesaiSn) * 100) : r.genelHizPerf;
+  };
   const ortVPerf = performansData.length > 0
-    ? Math.round(performansData.reduce((s, r) => s + (r.genelHizPerf !== null && r.genelHizPerf !== undefined ? Math.round(r.genelHizPerf * (100 / hedef)) : 0), 0) / performansData.length) : 0;
+    ? Math.round(performansData.reduce((s, r) => {
+        const hp = _hamPerfDuzeltilmis(r);
+        return s + (hp !== null && hp !== undefined ? Math.round(hp * (100 / hedef)) : 0);
+      }, 0) / performansData.length) : 0;
   const ortalamaGun = performansData.length > 0
     ? Math.round(performansData.reduce((s, r) => s + (r.gunSayisi || 0), 0) / performansData.length) : 0;
 
@@ -5440,8 +5455,9 @@ function renderPerfTabloFromData(page) {
     const performans = row.genelHizPerf ?? 0;
     const performansClass = getPerformanceClass(performans);
     const cm = perfColorMap[performansClass] || perfColorMap['perf-verypoor'];
-    const vPerfDisplay = row.genelHizPerf !== null && row.genelHizPerf !== undefined
-      ? Math.round(row.genelHizPerf * (100 / hedef)) : null;
+    const _hpDuz = _hamPerfDuzeltilmis(row);
+    const vPerfDisplay = _hpDuz !== null && _hpDuz !== undefined
+      ? Math.round(_hpDuz * (100 / hedef)) : null;
     const vPerfClass = vPerfDisplay === null ? '' : getPerformanceClass(vPerfDisplay);
     const vcm = perfColorMap[vPerfClass] || cm;
     const tarihDurumu = (row.tarihBasariliKayit || 0) > 0
