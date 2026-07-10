@@ -3498,10 +3498,12 @@ function formatNumber(num) {
 // ────────────────────────────
 function updateSummaryStats(inspectors) {
   const total = inspectors.length;
-  // Özet istatistikler için Düz. Performans (verimlilikPerf) kullan
-  const getPerfVal = (i) => i.verimlilikPerf !== null && i.verimlilikPerf !== undefined
-    ? i.verimlilikPerf
-    : (i.genelHizPerf ?? 0);
+  // Özet istatistikler için getDispPerf() kullanılır — "ne ödül ne ceza"
+  // (nötr kayıp zaman) düzeltmesini içeren TEK doğru kaynak. Eskiden burada
+  // ayrı, düzeltmesiz bir yerel hesap vardı; bu, üstteki özet sayaçlarla
+  // (ör. "5 İYİ") tıklanınca açılan detay popup'ının (showPerfSeviyeDetay,
+  // zaten getDispPerf kullanıyordu) FARKLI sayılar göstermesine yol açıyordu.
+  const getPerfVal = (i) => getDispPerf(i);
 
   const excellent = inspectors.filter(i => getPerfVal(i) >= 95).length;
   const good = inspectors.filter(i => {
