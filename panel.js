@@ -4558,12 +4558,23 @@ function exportToExcel() {
   }
 
   const workbook = XLSX.utils.book_new();
-  
+  const _exportHedef = Math.max(1, parseFloat(document.getElementById('inp-verimlilik')?.value) || 100);
+
   const mainData = performansData.map(inspector => {
     const totalHedef = inspector.standartSure || 0;
-    // Not: Bu kolon önceden yanlışlıkla "Hız Performansı"nı gösteriyordu.
-    // Doğrusu Verimlilik Perf (%) olmalı — düzeltildi.
-    const performans = inspector.verimlilikPerf ?? inspector.genelHizPerf ?? 0;
+    // "Ne ödül ne ceza": nötr kayıp zaman mesai süresinden düşülüp performans
+    // CANLI Hedef Verimlilik ile yeniden hesaplanır — Dashboard kartlarıyla
+    // (ve diğer tüm ekranlarla) birebir tutarlı olması için. Eskiden burada
+    // sadece durağan inspector.verimlilikPerf kullanılıyordu, bu da Dashboard'da
+    // gösterilenden farklı (eski) bir yüzde vermesine yol açıyordu.
+    const _stdSnEx = inspector.standartSure || 0;
+    let _mesSnEx = inspector.mesaiSure || 0;
+    const _kzSnEx = getNotrKayipDakikaForInspector(inspector.ins) * 60;
+    if (_kzSnEx > 0 && _mesSnEx > _kzSnEx) _mesSnEx -= _kzSnEx;
+    const _hamPEx = (_stdSnEx > 0 && _mesSnEx > 0)
+      ? Math.round((_stdSnEx / _mesSnEx) * 100) : inspector.genelHizPerf;
+    const performans = (_hamPEx !== null && _hamPEx !== undefined)
+      ? Math.round(_hamPEx * (100 / _exportHedef)) : (inspector.verimlilikPerf ?? inspector.genelHizPerf ?? 0);
     const ti = getTeknikIncelemeSkorForInspector(inspector.ins);
 
     return {
@@ -8418,14 +8429,21 @@ function getInspectorsForTeam(teamArr) {
   const hedef = Math.max(1, parseFloat(document.getElementById('inp-verimlilik')?.value) || 100);
   return performansData
     .filter(i => teamSet.has((i.ins || '').toLowerCase()))
-    .map(inspector => ({
-      ...inspector,
-      performans: inspector.verimlilikPerf !== null && inspector.verimlilikPerf !== undefined
-        ? inspector.verimlilikPerf
-        : (inspector.genelHizPerf !== null && inspector.genelHizPerf !== undefined
-            ? Math.round(inspector.genelHizPerf * (100 / hedef))
-            : 0)
-    }));
+    .map(inspector => {
+      // "Ne ödül ne ceza": nötr kayıp zaman mesai süresinden düşülüp
+      // performans buna göre hesaplanır — Dashboard ile tutarlı olması için.
+      const _stdSnT = inspector.standartSure || 0;
+      let _mesSnT = inspector.mesaiSure || 0;
+      const _kzSnT = getNotrKayipDakikaForInspector(inspector.ins) * 60;
+      if (_kzSnT > 0 && _mesSnT > _kzSnT) _mesSnT -= _kzSnT;
+      const _hamPT = (_stdSnT > 0 && _mesSnT > 0)
+        ? Math.round((_stdSnT / _mesSnT) * 100) : inspector.genelHizPerf;
+      return {
+        ...inspector,
+        performans: (_hamPT !== null && _hamPT !== undefined)
+          ? Math.round(_hamPT * (100 / hedef)) : 0
+      };
+    });
 }
 
 // performansData içinden, hedef verimliliğe göre normalize edilmiş "performans"
