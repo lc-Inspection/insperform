@@ -908,6 +908,13 @@ async function autoFetchOnStartup() {
     await fetchKayipZamanData();
   } catch(e) { console.warn('Kayıp zaman verisi çekme hatası (startup):', e.message); }
 
+  // ── İkinci Inspection verisini çek (ana Dashboard'un Excel çıktısında
+  // "İkinci Insp. Geçti/Toplam Oranı" sütunu doğru gözüksün diye — Teknik
+  // İnceleme sekmesine hiç girilmemiş olsa bile burada, herkes için çekilir.
+  try {
+    await fetchIkinciInspectionData();
+  } catch(e) { console.warn('İkinci Inspection verisi çekme hatası (startup):', e.message); }
+
   // ── Tümünü kaydet ve render et ──
   saveData();
   updateSidebar();
@@ -4584,6 +4591,7 @@ function exportToExcel() {
     const performans = (_hamPEx !== null && _hamPEx !== undefined)
       ? Math.round(_hamPEx * (100 / _exportHedef)) : (inspector.verimlilikPerf ?? inspector.genelHizPerf ?? 0);
     const ti = getTeknikIncelemeSkorForInspector(inspector.ins);
+    const ii = getIkinciInspectionOraniForInspector(inspector.ins);
 
     return {
       'Inspector': inspector.ins,
@@ -4593,6 +4601,7 @@ function exportToExcel() {
       'Mesai Süresi (dk)': Math.round((inspector.mesaiSure||0)/60),
       'Verimlilik Perf (%)': performans,
       'Teknik İnceleme Skoru (%)': (ti && ti.count > 0) ? ti.percent : '—',
+      'İkinci Insp. Geçti/Toplam Oranı (%)': ii.percent !== null ? ii.percent : '—',
       'Klasman Sayısı': Object.keys(inspector.klasmanlar).length,
       'Çalışma Gün Sayısı': inspector.gunSayisi || 0,
       'Overtime Performans (%)': (inspector.overtimePerformans !== null && inspector.overtimePerformans !== undefined) ? inspector.overtimePerformans : '—',
@@ -10728,6 +10737,19 @@ function getTeknikIncelemeSkorForInspector(inspectorName) {
   if (maxToplam <= 0) return { percent: 0, count: 0, seviye: '—' };
   const percent = Math.round((kazanilanToplam / maxToplam) * 100);
   return { percent, count: cevaplar.length, seviye: getPerformanceLevelLabel(percent) };
+}
+
+// Bir inspector'ın (kendisi İkinci Inspection'a konu olan kişi, "değerlendiren"
+// değil) İkinci Inspection kayıtlarındaki Geçti/Toplam oranını (%) döner.
+// Kayıt yoksa null — "ne ödül ne ceza" ilkesiyle tutarlı, veri yoksa hiçbir
+// yönde etki etmez.
+function getIkinciInspectionOraniForInspector(inspectorName) {
+  const nameNorm = String(inspectorName || '').toLowerCase().trim();
+  const kayitlar = ikinciInspectionData.filter(r => String(r.inspector || '').toLowerCase().trim() === nameNorm);
+  if (!kayitlar.length) return { percent: null, count: 0, geciSayisi: 0 };
+  const geciSayisi = kayitlar.filter(r => r.sonuc === 'Geçti').length;
+  const percent = Math.round((geciSayisi / kayitlar.length) * 100);
+  return { percent, count: kayitlar.length, geciSayisi };
 }
 
 // ─── Sayfa Girişi ───
