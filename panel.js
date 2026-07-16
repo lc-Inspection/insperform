@@ -9157,6 +9157,7 @@ async function saveIkinciInspection() {
 }
 
 async function temizleIkinciInspectionVerileri() {
+  if (!currentUser || !currentUser.isAdmin) { alert('⚠️ Bu işlem sadece admin tarafından yapılabilir.'); return; }
   if (!confirm('⚠️ TÜM İkinci Inspection kayıtlarını silmek istediğinize emin misiniz? Bu işlem geri alınamaz.')) return;
   const url = appConfig.sheetsWebAppUrl;
   const token = appConfig.sheetsApiToken;
@@ -10779,6 +10780,14 @@ async function loadTeknikInceleme() {
   // Uzmanı) tarafından görülüp yönetilebiliyor, sadece admin değil.
   if (adminWrap) adminWrap.style.display = isAdmin ? '' : 'none';
 
+  // "Temizle" butonları (toplu silme) admin'e özel kalır — görüntüleme ve
+  // kayıt ekleme herkese açık olsa da, tüm kayıtları silme yetkisi sadece
+  // admin'de olmalı (kullanıcı talebiyle).
+  const tiClearBtn = document.getElementById('ti-clear-btn');
+  if (tiClearBtn) tiClearBtn.style.display = isAdmin ? '' : 'none';
+  const iiClearBtn = document.getElementById('ii-clear-btn');
+  if (iiClearBtn) iiClearBtn.style.display = isAdmin ? '' : 'none';
+
   // Önbellekteki (localStorage) verilerle HEMEN çiz — ağ isteğini bekleme.
   renderTeknikKriterForm();
   renderTiSkorOzet();
@@ -11640,6 +11649,7 @@ function renderTiDashboard() {
 
 
 async function temizleTeknikIncelemeVerileri() {
+  if (!currentUser || !currentUser.isAdmin) { alert('⚠️ Bu işlem sadece admin tarafından yapılabilir.'); return; }
   if (!confirm('⚠️ Tüm Teknik İnceleme değerlendirme kayıtları silinecek!\n\nBu işlem geri alınamaz. Devam etmek istiyor musunuz?')) return;
   if (!confirm('Son kez soruyoruz: Teknik İnceleme verilerini kalıcı olarak silmek istediğinize emin misiniz?')) return;
 
