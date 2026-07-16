@@ -1260,9 +1260,14 @@
       <div class="card" style="margin-bottom:16px;overflow:hidden">
         <div class="card-header" style="padding:14px 16px;border-bottom:1px solid var(--border2);flex-wrap:wrap;gap:8px">
           <h2>🔎 İkinci Inspection Kayıtları</h2>
-          <button onclick="temizleIkinciInspectionVerileri()" id="ii-clear-btn" style="background:#FFEBEE;color:#C62828;border:1px solid #EF9A9A;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer">
-            🗑️ Temizle
-          </button>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button onclick="exportIkinciInspectionToExcel()" style="background:var(--lblue3);color:var(--blue2);border:1px solid var(--lblue);border-radius:8px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer">
+              📊 Excel'e Aktar
+            </button>
+            <button onclick="temizleIkinciInspectionVerileri()" id="ii-clear-btn" style="background:#FFEBEE;color:#C62828;border:1px solid #EF9A9A;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer">
+              🗑️ Temizle
+            </button>
+          </div>
         </div>
         <div class="card-body">
           <div id="ii-kayitlar-tablo" style="overflow-x:auto"></div>
