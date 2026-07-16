@@ -1271,12 +1271,12 @@
         </div>
         <div class="card-body">
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border2)">
-            <input type="text" id="ii-kayit-filtre-inspector" placeholder="🔎 Inspector ara..." oninput="renderIkinciInspectionTablo()" style="flex:1;min-width:160px;padding:6px 10px;font-size:12px">
-            <label style="font-size:11px;color:var(--muted);margin:0">Başlangıç</label>
-            <input type="date" id="ii-kayit-filtre-baslangic" onchange="renderIkinciInspectionTablo()" style="padding:6px 8px;font-size:12px">
-            <label style="font-size:11px;color:var(--muted);margin:0">Bitiş</label>
-            <input type="date" id="ii-kayit-filtre-bitis" onchange="renderIkinciInspectionTablo()" style="padding:6px 8px;font-size:12px">
-            <button onclick="document.getElementById('ii-kayit-filtre-inspector').value='';document.getElementById('ii-kayit-filtre-baslangic').value='';document.getElementById('ii-kayit-filtre-bitis').value='';renderIkinciInspectionTablo()" style="font-size:11px;border:1px solid var(--border2);background:#fff;border-radius:6px;padding:6px 10px;cursor:pointer;color:var(--muted)">✕ Filtreyi Temizle</button>
+            <input type="text" id="ii-kayit-filtre-inspector" placeholder="🔎 Inspector ara..." oninput="iiKayitSayfa=1;renderIkinciInspectionTablo()" style="flex:1 1 180px;min-width:140px;padding:6px 10px;font-size:12px">
+            <label style="font-size:11px;color:var(--muted);margin:0;display:inline-block;width:auto;white-space:nowrap">Başlangıç</label>
+            <input type="date" id="ii-kayit-filtre-baslangic" onchange="iiKayitSayfa=1;renderIkinciInspectionTablo()" style="width:150px;flex:0 0 auto;padding:6px 8px;font-size:12px">
+            <label style="font-size:11px;color:var(--muted);margin:0;display:inline-block;width:auto;white-space:nowrap">Bitiş</label>
+            <input type="date" id="ii-kayit-filtre-bitis" onchange="iiKayitSayfa=1;renderIkinciInspectionTablo()" style="width:150px;flex:0 0 auto;padding:6px 8px;font-size:12px">
+            <button onclick="document.getElementById('ii-kayit-filtre-inspector').value='';document.getElementById('ii-kayit-filtre-baslangic').value='';document.getElementById('ii-kayit-filtre-bitis').value='';iiKayitSayfa=1;renderIkinciInspectionTablo()" style="font-size:11px;border:1px solid var(--border2);background:#fff;border-radius:6px;padding:6px 10px;cursor:pointer;color:var(--muted)">✕ Filtreyi Temizle</button>
           </div>
           <div id="ii-kayitlar-tablo" style="overflow-x:auto"></div>
         </div>
@@ -1292,11 +1292,11 @@
         </div>
         <div class="card-body">
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border2)">
-            <input type="text" id="ti-skor-filtre-inspector" placeholder="🔎 Inspector ara..." oninput="tiSkorSayfa=1;renderTiSkorOzet()" style="flex:1;min-width:160px;padding:6px 10px;font-size:12px">
-            <label style="font-size:11px;color:var(--muted);margin:0">Başlangıç</label>
-            <input type="date" id="ti-skor-filtre-baslangic" onchange="tiSkorSayfa=1;renderTiSkorOzet()" style="padding:6px 8px;font-size:12px">
-            <label style="font-size:11px;color:var(--muted);margin:0">Bitiş</label>
-            <input type="date" id="ti-skor-filtre-bitis" onchange="tiSkorSayfa=1;renderTiSkorOzet()" style="padding:6px 8px;font-size:12px">
+            <input type="text" id="ti-skor-filtre-inspector" placeholder="🔎 Inspector ara..." oninput="tiSkorSayfa=1;renderTiSkorOzet()" style="flex:1 1 180px;min-width:140px;padding:6px 10px;font-size:12px">
+            <label style="font-size:11px;color:var(--muted);margin:0;display:inline-block;width:auto;white-space:nowrap">Başlangıç</label>
+            <input type="date" id="ti-skor-filtre-baslangic" onchange="tiSkorSayfa=1;renderTiSkorOzet()" style="width:150px;flex:0 0 auto;padding:6px 8px;font-size:12px">
+            <label style="font-size:11px;color:var(--muted);margin:0;display:inline-block;width:auto;white-space:nowrap">Bitiş</label>
+            <input type="date" id="ti-skor-filtre-bitis" onchange="tiSkorSayfa=1;renderTiSkorOzet()" style="width:150px;flex:0 0 auto;padding:6px 8px;font-size:12px">
             <button onclick="document.getElementById('ti-skor-filtre-inspector').value='';document.getElementById('ti-skor-filtre-baslangic').value='';document.getElementById('ti-skor-filtre-bitis').value='';tiSkorSayfa=1;renderTiSkorOzet()" style="font-size:11px;border:1px solid var(--border2);background:#fff;border-radius:6px;padding:6px 10px;cursor:pointer;color:var(--muted)">✕ Filtreyi Temizle</button>
           </div>
           <div id="ti-skor-ozet" style="overflow-x:auto"></div>
@@ -1344,11 +1344,11 @@
         </div>
         <div class="card-body">
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border2)">
-            <input type="text" id="ti-kayit-filtre-inspector" placeholder="🔎 Inspector ara..." oninput="tiKayitSayfa=1;renderTiKayitlarTablo()" style="flex:1;min-width:160px;padding:6px 10px;font-size:12px">
-            <label style="font-size:11px;color:var(--muted);margin:0">Başlangıç</label>
-            <input type="date" id="ti-kayit-filtre-baslangic" onchange="tiKayitSayfa=1;renderTiKayitlarTablo()" style="padding:6px 8px;font-size:12px">
-            <label style="font-size:11px;color:var(--muted);margin:0">Bitiş</label>
-            <input type="date" id="ti-kayit-filtre-bitis" onchange="tiKayitSayfa=1;renderTiKayitlarTablo()" style="padding:6px 8px;font-size:12px">
+            <input type="text" id="ti-kayit-filtre-inspector" placeholder="🔎 Inspector ara..." oninput="tiKayitSayfa=1;renderTiKayitlarTablo()" style="flex:1 1 180px;min-width:140px;padding:6px 10px;font-size:12px">
+            <label style="font-size:11px;color:var(--muted);margin:0;display:inline-block;width:auto;white-space:nowrap">Başlangıç</label>
+            <input type="date" id="ti-kayit-filtre-baslangic" onchange="tiKayitSayfa=1;renderTiKayitlarTablo()" style="width:150px;flex:0 0 auto;padding:6px 8px;font-size:12px">
+            <label style="font-size:11px;color:var(--muted);margin:0;display:inline-block;width:auto;white-space:nowrap">Bitiş</label>
+            <input type="date" id="ti-kayit-filtre-bitis" onchange="tiKayitSayfa=1;renderTiKayitlarTablo()" style="width:150px;flex:0 0 auto;padding:6px 8px;font-size:12px">
             <button onclick="document.getElementById('ti-kayit-filtre-inspector').value='';document.getElementById('ti-kayit-filtre-baslangic').value='';document.getElementById('ti-kayit-filtre-bitis').value='';tiKayitSayfa=1;renderTiKayitlarTablo()" style="font-size:11px;border:1px solid var(--border2);background:#fff;border-radius:6px;padding:6px 10px;cursor:pointer;color:var(--muted)">✕ Filtreyi Temizle</button>
           </div>
           <div id="ti-kayitlar-tablo" style="overflow-x:auto"></div>
