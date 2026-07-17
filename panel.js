@@ -570,6 +570,20 @@ let excelCols = [];
 let performansData = [];
 let kayipZamanData = []; // { id, inspector, tarih, gun, baslangic, bitis, sebep, aciklama, ekipYoneticisi, sureDk }
 
+// "Bugünün tarihi"ni YEREL saate göre (YYYY-MM-DD) döner — new Date().
+// toISOString() KULLANMAZ çünkü o UTC'ye çevirir ve gece yarısına yakın
+// saatlerde (özellikle UTC+3 Türkiye saatinde) bir gün KAYABİLİR: örneğin
+// Türkiye'de 00:30'da (yerel "bugün") toISOString() hâlâ UTC'deki "dün"ü
+// döner — bu da "Bugün Teknik Değ." gibi günlük hedef takibinde kaydın
+// yanlış güne düşmesine (dashboard'da görünmemesine) yol açar.
+function _bugununTarihiYerel() {
+  const d = new Date();
+  const yil = d.getFullYear();
+  const ay = String(d.getMonth() + 1).padStart(2, '0');
+  const gun = String(d.getDate()).padStart(2, '0');
+  return `${yil}-${ay}-${gun}`;
+}
+
 // ─── İkinci Inspection (kullanıcı talebiyle eklendi) ───
 // Teknik İnceleme bölümüne giriş yapan kullanıcıların ikinci hedefi: günlük
 // belirli sayıda "ikinci inspection" kaydı girmeleri gerekiyor.
@@ -4632,7 +4646,7 @@ function exportToExcel() {
   const detailSheet = XLSX.utils.json_to_sheet(detailData);
   XLSX.utils.book_append_sheet(workbook, detailSheet, 'Klasman Detayları');
 
-  const fileName = `Inspector_Performans_${new Date().toISOString().split('T')[0]}.xlsx`;
+  const fileName = `Inspector_Performans_${_bugununTarihiYerel()}.xlsx`;
   XLSX.writeFile(workbook, fileName);
 }
 
@@ -4829,7 +4843,7 @@ function exportInspectorDetail() {
   });
   XLSX.utils.book_append_sheet(wb, wsGenel, 'Inspector Özet');
 
-  const fileName = `${inspector.ins.replace(/\s+/g, '_')}_Detay_${new Date().toISOString().split('T')[0]}.xlsx`;
+  const fileName = `${inspector.ins.replace(/\s+/g, '_')}_Detay_${_bugununTarihiYerel()}.xlsx`;
   XLSX.writeFile(wb, fileName);
 }
 
@@ -9010,7 +9024,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (gunEl) gunEl.value = tarihtenGun(tarihInput.value);
     });
     // Varsayılan bugün
-    const today = new Date().toISOString().split('T')[0];
+    const today = _bugununTarihiYerel();
     tarihInput.value = today;
     const gunEl = document.getElementById('kz-gun');
     if (gunEl) gunEl.value = tarihtenGun(today);
@@ -9134,7 +9148,7 @@ async function saveIkinciInspection() {
   const talepMiktari   = parseInt(document.getElementById('ii-talep-miktari')?.value, 10) || 0;
   const sonuc          = document.getElementById('ii-sonuc')?.value || '';
   const notAlani       = document.getElementById('ii-not')?.value?.trim() || '';
-  const tarih          = document.getElementById('ii-tarih')?.value || new Date().toISOString().split('T')[0];
+  const tarih          = document.getElementById('ii-tarih')?.value || _bugununTarihiYerel();
 
   if (!inspector)  { alert('⚠️ Lütfen Inspector İsmi girin.'); return; }
   if (!talepNo)    { alert('⚠️ Lütfen Talep Numarası girin.'); return; }
@@ -10592,7 +10606,7 @@ function _kayipZamanExcelIndirOlustur(records) {
   const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
-  const tarihStr = new Date().toISOString().split('T')[0];
+  const tarihStr = _bugununTarihiYerel();
   a.href = url;
   a.download = `KayipZaman_${tarihStr}.csv`;
   document.body.appendChild(a);
@@ -10798,9 +10812,9 @@ async function fillIkinciInspectionDropdowns() {
 
 async function loadTeknikInceleme() {
   const tarihEl = document.getElementById('ti-tarih');
-  if (tarihEl && !tarihEl.value) tarihEl.value = new Date().toISOString().split('T')[0];
+  if (tarihEl && !tarihEl.value) tarihEl.value = _bugununTarihiYerel();
   const iiTarihEl = document.getElementById('ii-tarih');
-  if (iiTarihEl && !iiTarihEl.value) iiTarihEl.value = new Date().toISOString().split('T')[0];
+  if (iiTarihEl && !iiTarihEl.value) iiTarihEl.value = _bugununTarihiYerel();
 
   // SADELEŞTİRİLMİŞ AKIŞ (kullanıcı talebiyle): Inspector listesi artık
   // tarihten TAMAMEN bağımsız — sayfa açılır açılmaz TÜM inspector'lar
@@ -11519,7 +11533,7 @@ function exportTiSkorOzetToExcel() {
   const ws = XLSX.utils.json_to_sheet(data);
   ws['!cols'] = [{wch:24},{wch:12},{wch:16},{wch:20}];
   XLSX.utils.book_append_sheet(workbook, ws, 'Teknik İnceleme Skorları');
-  const tarihStr = new Date().toISOString().split('T')[0];
+  const tarihStr = _bugununTarihiYerel();
   XLSX.writeFile(workbook, `Teknik_Inceleme_Skorlari_${tarihStr}.xlsx`);
 }
 
@@ -11714,7 +11728,7 @@ function exportIkinciInspectionToExcel() {
     {wch:16},{wch:22},{wch:22},{wch:14},{wch:14},{wch:10},{wch:30},{wch:12},{wch:20},{wch:22}
   ];
   XLSX.utils.book_append_sheet(workbook, ws, 'İkinci Inspection');
-  const tarihStr = new Date().toISOString().split('T')[0];
+  const tarihStr = _bugununTarihiYerel();
   XLSX.writeFile(workbook, `Ikinci_Inspection_Kayitlari_${tarihStr}.xlsx`);
 }
 
@@ -11854,7 +11868,7 @@ function exportTiDashboardToExcel() {
     {wch:22},{wch:24},{wch:16},{wch:30},{wch:20},{wch:22},{wch:16},{wch:30},{wch:20},{wch:26},{wch:18}
   ];
   XLSX.utils.book_append_sheet(workbook, ws, 'Teknik Değ. Uzmanları');
-  const tarihStr = new Date().toISOString().split('T')[0];
+  const tarihStr = _bugununTarihiYerel();
   XLSX.writeFile(workbook, `Teknik_Degerlendirme_Uzmanlari_Performans_${tarihStr}.xlsx`);
 }
 
@@ -11862,7 +11876,7 @@ function renderTiDashboard() {
   const wrap = document.getElementById('ti-dashboard-wrap');
   if (!wrap) return;
 
-  const bugun = new Date().toISOString().split('T')[0];
+  const bugun = _bugununTarihiYerel();
   const hedefTD = teknikHedefler.teknikDegerlendirmeGunluk || 3;
   const hedefII = teknikHedefler.ikinciInspectionGunluk || 5;
 
