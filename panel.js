@@ -6252,7 +6252,9 @@ function performansHesapla(){
     // formülden geçer (kalite ayrımı yok). "2.Kalite" ile başlayan değerler
     // sadece UI'da ayrıca işaretlenmesi için bayraklanır.
     const inspectionTipiRaw = inspectionTipiCol ? String(row[inspectionTipiCol] || '').trim() : '';
-    const is2Kalite = inspectionTipiRaw.toLocaleLowerCase('tr-TR').startsWith('2.kalite');
+    // Boşluk/nokta varyasyonlarına (ör. "2. Kalite", "2 Kalite", "2.Kalite")
+    // karşı esnek olsun diye normalize edilip öyle kontrol edilir.
+    const is2Kalite = inspectionTipiRaw.toLocaleLowerCase('tr-TR').replace(/[\s.]/g, '').startsWith('2kalite');
 
     const klasmanKey2 = excelKlasman;
     if (!inspectorMap[ins].klasmanlar[klasmanKey2]) {
