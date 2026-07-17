@@ -4485,6 +4485,7 @@ function showInspectorDetail(inspectorName) {
           id: list.length + 1, klasman: klasmanAd,
           adet: k.adet, kontrolAdetSuresi: k.kontrolAdetSuresi || 0,
           istasyonSuresi: k.istasyonSuresi || 0, standartSure: k.standartSure || 0,
+          standartSureHam: k.standartSureHam != null ? k.standartSureHam : (k.standartSure || 0),
           kayitFiiliSure: k.kayitFiiliSure || 0, baslangic: k.baslangic,
           bitis: k.bitis, tarihGecerli: k.tarihGecerli,
           ortalamaKontrolSn: k.adet > 0 && k.kayitFiiliSure > 0 ? Math.round(k.kayitFiiliSure / k.adet) : null,
@@ -4665,16 +4666,27 @@ function exportInspectorDetail() {
   const wb = XLSX.utils.book_new();
 
   // ── SAYFA 1: Özet (Klasman bazında) ──
-  const ozetRows = Object.entries(inspector.klasmanlar).map(([klasman, kd]) => ({
-    'Klasman':              klasman,
-    'Toplam Adet':          kd.adet || 0,
-    'Standart Süre':        fmtSnExcel(kd.standartSure),
-    'Standart Süre (sn)':   kd.standartSure || 0,
-    'Gerçekleşen Süre':     fmtSnExcel(kd.kayitFiiliSure),
-    'Gerçekleşen (sn)':     kd.kayitFiiliSure || 0,
-    'Oran (Std./Ger.)':     oranHesapla(kd.standartSure, kd.kayitFiiliSure),
-    'Hız Performansı (%)':  kd.hizPerf ?? '—'
-  }));
+  // "Standart Süre" artık HAM (tavanlanmamış) değeri gösterir — kısa
+  // kayıtlarda (≤10dk gerçekleşen) performans hesabı için ayrıca tavanlanan
+  // değer sadece "Performansta Kullanılan" sütununda görünür (ikisi farklıysa).
+  // Oran ve Hız Performansı hâlâ tavanlı değeri kullanır — sistem/hesaplama
+  // DEĞİŞMEDİ, sadece Excel'deki "Standart Süre" görünümü düzeltildi
+  // (kullanıcı talebiyle: "sistemi değiştirme, sadece Excel'i düzelt").
+  const ozetRows = Object.entries(inspector.klasmanlar).map(([klasman, kd]) => {
+    const ham = kd.standartSureHam ?? kd.standartSure;
+    const tavanliMi = Math.round(ham) !== Math.round(kd.standartSure || 0);
+    return {
+      'Klasman':              klasman,
+      'Toplam Adet':          kd.adet || 0,
+      'Standart Süre':        fmtSnExcel(ham),
+      'Standart Süre (sn)':   ham || 0,
+      'Performansta Kullanılan Standart Süre': tavanliMi ? fmtSnExcel(kd.standartSure) + ' (kısa kayıt tavanı)' : '—',
+      'Gerçekleşen Süre':     fmtSnExcel(kd.kayitFiiliSure),
+      'Gerçekleşen (sn)':     kd.kayitFiiliSure || 0,
+      'Oran (Std./Ger.)':     oranHesapla(kd.standartSure, kd.kayitFiiliSure),
+      'Hız Performansı (%)':  kd.hizPerf ?? '—'
+    };
+  });
   const wsOzet = XLSX.utils.json_to_sheet(ozetRows);
 
   // Sütun genişlikleri
@@ -6186,6 +6198,11 @@ function performansHesapla(){
     const olcuEk = olcuAdet * (klasmanInfo.olcuSuresi || 0);
     const urunKabulEk = urunKabulKat * (klasmanInfo.urunKabulSuresi || 0);
     let standartSure = (klasmanInfo.urunKontrolSuresi * adet) + olcuEk + urunKabulEk + klasmanInfo.istasyonSuresi;
+    // Tavanlama ÖNCESİ ham değeri ayrıca sakla — SADECE gösterim/dokümantasyon
+    // (Excel, panel özet başlığı) için kullanılır. Verimlilik Perf/Oran
+    // hesabı hâlâ aşağıdaki tavanlanmış standartSure'u kullanmaya devam eder
+    // — kullanıcı talebiyle: "sistemi değiştirme, sadece Excel'i düzelt".
+    const standartSureHam = standartSure;
 
     // Bu kaydın fiili süresi = başlangıç-bitiş farkı (mola düşümlü)
     const kayitFiiliSure = tarihGecerli
@@ -6244,6 +6261,7 @@ function performansHesapla(){
       } else {
         kl.toplamAdet += adet;
         kl.toplamStandartSure += standartSure;
+        kl.toplamStandartSureHam = (kl.toplamStandartSureHam || 0) + standartSureHam;
         if (kayitFiiliSure && kayitFiiliSure > 0) {
           kl.toplamKayitFiiliSure += kayitFiiliSure;
         }
@@ -6255,7 +6273,7 @@ function performansHesapla(){
       }
     }
     const kayitNormalSayilir = kayitNormalMi(parsedBitis);
-    kl.kayitlar.push({ no: kl.kayitlar.length + 1, klasman: excelKlasman, adet, standartSure, kayitFiiliSure, kontrolAdetSuresi: klasmanInfo.urunKontrolSuresi, istasyonSuresi: klasmanInfo.istasyonSuresi, istasyonDetay: klasmanInfo.istasyonDetay || [], baslangic: parsedBaslangic, bitis: parsedBitis, tarihGecerli, normalMesai: kayitNormalSayilir, talepNo: talepColFallback ? String(row[talepColFallback]||'').trim() : '', inspectionTipi: inspectionTipiRaw, is2Kalite });
+    kl.kayitlar.push({ no: kl.kayitlar.length + 1, klasman: excelKlasman, adet, standartSure, standartSureHam, kayitFiiliSure, kontrolAdetSuresi: klasmanInfo.urunKontrolSuresi, istasyonSuresi: klasmanInfo.istasyonSuresi, istasyonDetay: klasmanInfo.istasyonDetay || [], baslangic: parsedBaslangic, bitis: parsedBitis, tarihGecerli, normalMesai: kayitNormalSayilir, talepNo: talepColFallback ? String(row[talepColFallback]||'').trim() : '', inspectionTipi: inspectionTipiRaw, is2Kalite });
 
     // Overtime'da (16:45 sonrası) kontrol edilen toplam adedi ayrıca izle —
     // yalnızca gösterim/rapor amaçlı, mevcut performans hesaplarını etkilemez.
@@ -6325,6 +6343,7 @@ function performansHesapla(){
       klasmanlarObj[klasman] = {
         adet: kl.toplamAdet,
         standartSure: kl.toplamStandartSure,
+        standartSureHam: kl.toplamStandartSureHam || kl.toplamStandartSure,
         kayitFiiliSure: kl.toplamKayitFiiliSure || 0,
         hizPerf,
         hacimPerf: null,
