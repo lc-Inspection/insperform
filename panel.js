@@ -11324,6 +11324,7 @@ async function kaydetTeknikInceleme() {
     }
     renderTiSkorOzet();
     if (!currentUser || currentUser.isAdmin) renderTiKayitlarTablo();
+    renderTiDashboard();
     // Dashboard kartlarında da güncel görünsün
     if (typeof renderDashboard === 'function' && document.getElementById('inspector-grid')) renderDashboard();
   } catch(e) {
