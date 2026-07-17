@@ -11181,6 +11181,10 @@ function yazdirTeknikIncelemeSonucu() {
 }
 
 // ─── Değerlendirmeyi Kaydet ───
+// Düzenleme modu (kullanıcı talebiyle eklendi): dolu ise "Değerlendirmeyi
+// Kaydet" aslında bu ID'li MEVCUT kaydı günceller, yeni kayıt oluşturmaz.
+let _tiDuzenlemeId = null;
+
 async function kaydetTeknikInceleme() {
   const inspector = document.getElementById('ti-inspector')?.value?.trim();
   const tarih = document.getElementById('ti-tarih')?.value;
@@ -11218,6 +11222,9 @@ async function kaydetTeknikInceleme() {
     cevaplar: cevaplarGonderim,
     savedAt: new Date().toISOString()
   };
+  // Düzenleme modundaysak (mevcut bir kaydı güncelliyorsak) id'yi de gönder
+  // — backend bunu görünce YENİ kayıt eklemek yerine mevcut kaydı günceller.
+  if (_tiDuzenlemeId) evaluation.id = _tiDuzenlemeId;
 
   const btn = document.getElementById('ti-save-btn');
   const msg = document.getElementById('ti-save-msg');
@@ -11250,13 +11257,23 @@ async function kaydetTeknikInceleme() {
       maxToplam += c.maxPuan;
       if (c.tikli) { kazanilanToplam += c.maxPuan; tikliSayisi++; }
     });
-    teknikSkorlar.push({
-      id: Date.now().toString(),
+    const yeniSkorKaydi = {
+      id: _tiDuzenlemeId || Date.now().toString(),
       inspector, degerlendiren: evaluation.degerlendiren, tarih, talepNo,
       maxPuan: maxToplam, kazanilanPuan: kazanilanToplam,
       skorYuzde: maxToplam > 0 ? Math.round((kazanilanToplam / maxToplam) * 100) : 0,
       maddeSayisi: cevaplar.length, tikliSayisi, savedAt: now
-    });
+    };
+    if (_tiDuzenlemeId) {
+      // Düzenleme modu: eski satırı bul ve YERİNE koy (yeni satır ekleme)
+      const idx = teknikSkorlar.findIndex(s => String(s.id) === String(_tiDuzenlemeId));
+      if (idx >= 0) teknikSkorlar[idx] = yeniSkorKaydi;
+      else teknikSkorlar.push(yeniSkorKaydi);
+    } else {
+      teknikSkorlar.push(yeniSkorKaydi);
+    }
+    const _duzenlemeModuydu = !!_tiDuzenlemeId;
+    _tiDuzenlemeId = null; // düzenleme modundan çık
     saveTeknikIncelemeToLocalStorage();
     if (msg) { msg.style.display = ''; setTimeout(() => { msg.style.display = 'none'; }, 3000); }
     // Kaydettikten sonra Talep No'yu temizle ve kriter listesini AÇIKÇA gizle
@@ -11268,7 +11285,7 @@ async function kaydetTeknikInceleme() {
     if (kriterWrap) {
       kriterWrap.innerHTML = `<div class="empty" style="padding:20px">
         <div class="empty-icon">✅</div>
-        <h3>Değerlendirme kaydedildi!</h3>
+        <h3>${_duzenlemeModuydu ? 'Değerlendirme güncellendi!' : 'Değerlendirme kaydedildi!'}</h3>
         <p>Yeni bir değerlendirme için yukarıdan Talep No girin</p>
       </div>`;
     }
@@ -11281,6 +11298,70 @@ async function kaydetTeknikInceleme() {
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = '💾 Değerlendirmeyi Kaydet'; }
   }
+}
+
+// ─── Bir Değerlendirmeyi Düzenlemeye Aç (kullanıcı talebiyle eklendi) ───
+// Sunucudan o kaydın tam detayını (madde madde tikli/açıklama) çeker,
+// "Değerlendirme Yap" formunu bu verilerle doldurur ve düzenleme moduna
+// geçer — "Kaydet" artık bu kaydı GÜNCELLER, yeni kayıt oluşturmaz.
+async function duzenleTeknikInceleme(id) {
+  const url = appConfig.sheetsWebAppUrl;
+  const token = appConfig.sheetsApiToken;
+  if (!url) { alert('⚠️ Sunucu bağlantısı yapılandırılmamış.'); return; }
+
+  try {
+    const resp = await jsonpFetch(url, { action: 'getTeknikIncelemeDetay', token, id });
+    if (!resp || resp.status !== 'ok' || !resp.kayit) {
+      alert('❌ Kayıt detayı alınamadı: ' + (resp?.message || 'bilinmeyen hata'));
+      return;
+    }
+    const kayit = resp.kayit;
+
+    // Formu doldur
+    const tarihEl = document.getElementById('ti-tarih');
+    if (tarihEl) tarihEl.value = kayit.tarih || tarihEl.value;
+    const inspectorEl = document.getElementById('ti-inspector');
+    if (inspectorEl) inspectorEl.value = kayit.inspector || '';
+    const talepEl = document.getElementById('ti-talep-secili');
+    if (talepEl) talepEl.value = kayit.talepNo || '';
+
+    _tiDuzenlemeId = id;
+    renderTeknikKriterForm();
+
+    // Kaydedilmiş tikli/açıklama değerlerini render edilen forma uygula
+    (kayit.cevaplar || []).forEach(c => {
+      const kriterId = c.id;
+      const cbSel = `.ti-tik-cb[data-kriter="${(window.CSS && CSS.escape) ? CSS.escape(kriterId) : kriterId}"]`;
+      const aSel = `.ti-aciklama-input[data-kriter="${(window.CSS && CSS.escape) ? CSS.escape(kriterId) : kriterId}"]`;
+      const cb = document.querySelector(cbSel);
+      const aInp = document.querySelector(aSel);
+      if (cb) cb.checked = !!c.t;
+      if (aInp) aInp.value = c.a || '';
+    });
+
+    // Düzenleme modu banner'ı (form üstünde göster)
+    const kriterWrap = document.getElementById('ti-kriter-list');
+    if (kriterWrap) {
+      const banner = document.createElement('div');
+      banner.innerHTML = `<div style="background:#FFF3E0;border:1px solid #FFB74D;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:#E65100;display:flex;align-items:center;justify-content:space-between;gap:10px">
+        <span>✏️ <strong>Düzenleme modu:</strong> ${_escapeHtml(_formatDisplayName(kayit.inspector))} — ${_escapeHtml(kayit.talepNo)} değerlendirmesi güncelleniyor</span>
+        <button type="button" onclick="iptalTeknikDuzenleme()" style="border:1px solid #E65100;background:#fff;color:#E65100;border-radius:6px;padding:3px 10px;cursor:pointer;font-size:11px">İptal</button>
+      </div>`;
+      kriterWrap.prepend(banner);
+    }
+
+    // Forma kaydır
+    document.querySelector('.card:has(#ti-kriter-list)')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch(e) {
+    alert('Hata: ' + e.message);
+  }
+}
+
+// Düzenleme modundan çık (form olduğu gibi kalır, sadece "Kaydet" tekrar
+// YENİ kayıt oluşturur hale döner)
+function iptalTeknikDuzenleme() {
+  _tiDuzenlemeId = null;
+  renderTeknikKriterForm();
 }
 
 // ─── Skor Özeti Tablosu ───
@@ -11342,17 +11423,24 @@ function renderTiSkorOzet() {
     let maxToplam = 0, kazanilanToplam = 0;
     cevaplar.forEach(r => { maxToplam += (Number(r.maxPuan)||0); kazanilanToplam += (Number(r.kazanilanPuan)||0); });
     const percent = maxToplam > 0 ? Math.round((kazanilanToplam/maxToplam)*100) : 0;
-    return { percent, count: cevaplar.length, seviye: getPerformanceLevelLabel(percent) };
+    return { percent, count: cevaplar.length, seviye: getPerformanceLevelLabel(percent), kayitlar: cevaplar };
   };
 
   const rows = sayfaIsimleri.map(ins => {
     const s = skorHesapla(ins);
     const color = getProgressColor(s.percent);
+    // Düzenle butonu: SADECE bu görünümde (filtreye göre) tam olarak 1 kaydı
+    // varsa gösterilir — birden fazla kayıt varsa hangisinin düzenleneceği
+    // belirsiz olur, o durumda "Tüm Değerlendirme Kayıtları" bölümünden
+    // (her satırda kendi Düzenle butonu var) düzenlemek gerekir.
+    const duzenleBtn = s.count === 1
+      ? `<button type="button" onclick="duzenleTeknikInceleme('${String(s.kayitlar[0].id).replace(/'/g,"\\'")}')" style="border:1px solid var(--lblue);background:var(--lblue3);color:var(--blue2);border-radius:6px;padding:3px 9px;cursor:pointer;font-size:11px;font-weight:600;margin-left:8px">✏️ Düzenle</button>`
+      : (s.count > 1 ? `<span style="font-size:10.5px;color:var(--muted2);font-style:italic;margin-left:8px">(${s.count} kayıt — "Tüm Kayıtlar"dan düzenleyin)</span>` : '');
     return `<tr>
       <td style="padding:8px 10px;font-size:13px;color:var(--navy);font-weight:500">${_escapeHtml(_formatDisplayName(ins))}</td>
       <td style="padding:8px 10px;font-size:13px;font-weight:700;color:${color}">${s.percent}%</td>
       <td style="padding:8px 10px;font-size:12px;color:${color}">${s.seviye}</td>
-      <td style="padding:8px 10px;font-size:12px;color:var(--muted2)">${s.count} madde cevabı</td>
+      <td style="padding:8px 10px;font-size:12px;color:var(--muted2)">${s.count} madde cevabı${duzenleBtn}</td>
     </tr>`;
   }).join('');
   wrap.innerHTML = `<table style="width:100%;border-collapse:collapse">
@@ -11533,6 +11621,9 @@ function renderTiKayitlarTablo() {
       <td style="padding:7px 10px;font-size:12px;color:var(--muted2)">${g.maddeSayisi || 0} madde · ${g.kazanilanPuan}/${g.maxPuan} puan</td>
       <td style="padding:7px 10px;font-size:12px;font-weight:700;color:${getProgressColor(percent)}">${percent}%</td>
       <td style="padding:7px 10px">${durumHtml}</td>
+      <td style="padding:7px 10px">
+        <button type="button" onclick="duzenleTeknikInceleme('${String(g.id).replace(/'/g,"\\'")}')" style="border:1px solid var(--lblue);background:var(--lblue3);color:var(--blue2);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:11.5px;font-weight:600">✏️ Düzenle</button>
+      </td>
     </tr>`;
   }).join('');
   wrap.innerHTML = `
@@ -11549,6 +11640,7 @@ function renderTiKayitlarTablo() {
       <th style="text-align:left;padding:7px 10px;font-size:11px;color:var(--muted);text-transform:uppercase">Madde</th>
       <th style="text-align:left;padding:7px 10px;font-size:11px;color:var(--muted);text-transform:uppercase">Skor</th>
       <th style="text-align:left;padding:7px 10px;font-size:11px;color:var(--muted);text-transform:uppercase">Durum</th>
+      <th style="text-align:left;padding:7px 10px;font-size:11px;color:var(--muted);text-transform:uppercase">İşlem</th>
     </tr></thead>
     <tbody>${rows}</tbody>
   </table>
@@ -11594,6 +11686,14 @@ function exportIkinciInspectionToExcel() {
 }
 
 // ─── İkinci Inspection Kayıtları Tablosu ───
+// İkinci Inspection Not sütunundaki 👁️ ikonuna tıklanınca notu gösterir
+// (uzun notlar tablonun tasarımını bozmasın diye — kullanıcı talebiyle eklendi).
+function showIiNotPopup(id) {
+  const rec = ikinciInspectionData.find(r => String(r.id) === String(id));
+  if (!rec) return;
+  alert(`📝 Not — ${_formatDisplayName(rec.inspector || '')} (${rec.talepNo || '—'})\n\n${rec.notAlani || '(not girilmemiş)'}`);
+}
+
 function renderIkinciInspectionTablo() {
   const wrap = document.getElementById('ii-kayitlar-tablo');
   if (!wrap) return;
@@ -11640,7 +11740,7 @@ function renderIkinciInspectionTablo() {
       <td style="padding:7px 10px;font-size:12px;color:var(--muted2);font-family:'DM Mono',monospace">${_escapeHtml(r.talepNo || '—')}</td>
       <td style="padding:7px 10px;font-size:12px;color:var(--muted2)">${r.talepMiktari || 0}</td>
       <td style="padding:7px 10px">${durumHtml}</td>
-      <td style="padding:7px 10px;font-size:11.5px;color:var(--muted2)">${_escapeHtml(r.notAlani || '—')}</td>
+      <td style="padding:7px 10px;font-size:12px">${r.notAlani ? `<button type="button" onclick="showIiNotPopup('${String(r.id).replace(/'/g,"\\'")}')" title="Notu görüntüle" style="border:none;background:var(--lblue3);color:var(--blue2);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:13px;line-height:1">👁️</button>` : `<span style="color:var(--muted2);font-size:12px">—</span>`}</td>
       <td style="padding:7px 10px;font-size:12px;color:var(--muted2)">${_escapeHtml(r.tarih || '—')}</td>
       <td style="padding:7px 10px;font-size:11.5px;color:var(--muted)">${_escapeHtml(_formatDisplayName(r.degerlendiren || '—'))}</td>
     </tr>`;
