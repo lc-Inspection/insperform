@@ -110,10 +110,10 @@ const translations = {
     // Summary stats
     stat_total_inspector: 'Toplam Inspector',
     stat_excellent:       'Mükemmel (≥95%)',
-    stat_good:            'İyi (85-94%)',
+    stat_good:            'İyi (≥85%)',
     stat_average:         'Orta (70-84%)',
-    stat_poor:            'Zayıf (50-69%)',
-    stat_verypoor:        'Çok Zayıf (<50%)',
+    stat_poor:            'Gelişime Açık (50-69%)',
+    stat_verypoor:        'Zayıf (<50%)',
     stat_avg_perf:        '📅 Ortalama Performans',
     stat_avg_days:        '⏰ Ortalama Çalışma Günü',
     stat_total_product:   '📦 Toplam Ürün',
@@ -191,8 +191,8 @@ const translations = {
     perf_good:            'İyi',
     perf_average:         'Orta',
     perf_poor:            'Zayıf',
-    perf_weak:            'Zayıf',
-    perf_verypoor:        'Çok Zayıf',
+    perf_weak:            'Gelişime Açık',
+    perf_verypoor:        'Zayıf',
     stat_total_product2:  'TOPLAM ADET',
     std_duration_label:   'STANDART SÜRE',
     adj_perf_label_upper: 'DÜZ. PERFORMANS',
@@ -3437,7 +3437,6 @@ function showPage(id, navEl){
 }
 
 function getPerformanceClass(performans) {
-  if (performans >= 95) return 'perf-excellent';
   if (performans >= 85) return 'perf-good';
   if (performans >= 70) return 'perf-average';
   if (performans >= 50) return 'perf-weak';
@@ -3502,7 +3501,6 @@ function getProgressColor(performans) {
 // Performans seviyesi etiketini döner (5 seviye): Mükemmel/İyi/Orta/Zayıf/Çok Zayıf
 function getPerformanceLevelLabel(performans) {
   const t = translations[currentLang] || translations.tr;
-  if (performans >= 95) return t.perf_excellent;
   if (performans >= 85) return t.perf_good;
   if (performans >= 70) return t.perf_average;
   if (performans >= 50) return t.perf_weak;
@@ -3546,11 +3544,9 @@ function updateSummaryStats(inspectors) {
   // zaten getDispPerf kullanıyordu) FARKLI sayılar göstermesine yol açıyordu.
   const getPerfVal = (i) => getDispPerf(i);
 
-  const excellent = inspectors.filter(i => getPerfVal(i) >= 95).length;
-  const good = inspectors.filter(i => {
-    const p = getPerfVal(i);
-    return p >= 85 && p < 95;
-  }).length;
+  // 5'ten 4'e indirildi (kullanıcı talebiyle): Mükemmel+İyi tek "İyi" dilimi
+  // oldu (≥85%). "Zayıf" → "Gelişime Açık" (50-69%), "Çok Zayıf" → "Zayıf" (<50%).
+  const good = inspectors.filter(i => getPerfVal(i) >= 85).length;
   const average = inspectors.filter(i => {
     const p = getPerfVal(i);
     return p >= 70 && p < 85;
@@ -3574,7 +3570,6 @@ function updateSummaryStats(inspectors) {
 
   const totalProducts = inspectors.reduce((sum, i) => sum + (i.adet || 0), 0);
 
-  document.getElementById('excellent-count').textContent = excellent;
   document.getElementById('good-count').textContent = good;
   document.getElementById('average-count').textContent = average;
   document.getElementById('poor-count').textContent = poor;
@@ -3657,11 +3652,10 @@ function renderQuarterBadge(inspectors) {
 // oranı ile birlikte tablo halinde gösterir.
 // ─────────────────────────────────────────────
 const PERF_SEVIYE_TANIM = {
-  excellent: { label: 'Mükemmel (≥95%)',  icon: '🏆', min: 95,  max: Infinity, color: 'var(--green)' },
-  good:      { label: 'İyi (85-94%)',     icon: '👍', min: 85,  max: 95,       color: 'var(--blue)'  },
-  average:   { label: 'Orta (70-84%)',    icon: '⚠️', min: 70,  max: 85,       color: 'var(--amber)' },
-  weak:      { label: 'Zayıf (50-69%)',   icon: '🔻', min: 50,  max: 70,       color: '#EF5350'      },
-  verypoor:  { label: 'Çok Zayıf (<50%)', icon: '📉', min: -Infinity, max: 50, color: '#B71C1C'      }
+  good:      { label: 'İyi (≥85%)',              icon: '👍', min: 85,  max: Infinity, color: 'var(--blue)'  },
+  average:   { label: 'Orta (70-84%)',           icon: '⚠️', min: 70,  max: 85,       color: 'var(--amber)' },
+  weak:      { label: 'Gelişime Açık (50-69%)',  icon: '🔻', min: 50,  max: 70,       color: '#EF5350'      },
+  verypoor:  { label: 'Zayıf (<50%)',             icon: '📉', min: -Infinity, max: 50, color: '#B71C1C'      }
 };
 
 // ─────────────────────────────────────────────
@@ -4106,8 +4100,7 @@ function filterInspectors() {
   if (perfFilter) {
     filtered = filtered.filter(inspector => {
       switch(perfFilter) {
-        case 'excellent': return inspector.performans >= 95;
-        case 'good': return inspector.performans >= 85 && inspector.performans < 95;
+        case 'good': return inspector.performans >= 85;
         case 'average': return inspector.performans >= 70 && inspector.performans < 85;
         case 'poor': return inspector.performans >= 50 && inspector.performans < 70;
         case 'verypoor': return inspector.performans < 50;
@@ -5658,8 +5651,7 @@ function renderPerfTabloFromData(page) {
         <!-- Özet stat kutuları -->
         <div style="display:flex;gap:10px;flex-shrink:0;">
           ${[
-            ['🏆',(translations[currentLang]||translations.tr).perf_excellent,performansData.filter(r=>(r.genelHizPerf??0)>=95).length,'var(--green)','var(--lgreen)'],
-            ['👍','İyi',performansData.filter(r=>{const p=r.genelHizPerf??0;return p>=85&&p<95}).length,'var(--blue)','var(--lblue2)'],
+            ['👍',(translations[currentLang]||translations.tr).perf_good,performansData.filter(r=>(r.genelHizPerf??0)>=85).length,'var(--blue)','var(--lblue2)'],
             ['⚠️',(translations[currentLang]||translations.tr).perf_average,performansData.filter(r=>{const p=r.genelHizPerf??0;return p>=70&&p<85}).length,'var(--amber)','var(--lamber)'],
             ['🔻',(translations[currentLang]||translations.tr).perf_weak,performansData.filter(r=>{const p=r.genelHizPerf??0;return p>=50&&p<70}).length,'#EF5350','#FFEBEE'],
             ['📉',(translations[currentLang]||translations.tr).perf_verypoor,performansData.filter(r=>(r.genelHizPerf??0)<50).length,'#B71C1C','#FFCDD2']
@@ -6846,18 +6838,16 @@ function renderTopInspectors() {
     const rankIcon = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank;
     const t = (translations[currentLang] || translations.tr);
 
-    const perfColor = performans >= 95 ? '#4DB6AC'
-      : performans >= 85 ? '#64B5F6'
+    const perfColor = performans >= 85 ? '#64B5F6'
       : performans >= 70 ? '#FFB74D'
       : performans >= 50 ? '#EF9A9A'
       : '#FF8A80';
 
     const performanceLevel = (() => {
-      if (performans >= 95) return { text: 'MÜKEMMEL', cls: 'badge-excellent' };
       if (performans >= 85) return { text: 'İYİ', cls: 'badge-good' };
       if (performans >= 70) return { text: 'ORTA', cls: 'badge-average' };
-      if (performans >= 50) return { text: 'ZAYIF', cls: 'badge-weak' };
-      return { text: 'ÇOK ZAYIF', cls: 'badge-verypoor' };
+      if (performans >= 50) return { text: 'GELİŞİME AÇIK', cls: 'badge-weak' };
+      return { text: 'ZAYIF', cls: 'badge-verypoor' };
     })();
 
     return `
@@ -8565,7 +8555,6 @@ function renderEkipAnaliz() {
 
   // ── 2) Performans Dağılımı: ekip üyelerini bantlara ayır ──────────────────
   const bantlar = {
-    excellent: { key: 'excellent', label: t.perf_excellent, color: 'var(--green)', bg: 'var(--lgreen)', count: 0 },
     good:      { key: 'good',      label: t.perf_good,      color: 'var(--blue)',  bg: 'var(--lblue3)', count: 0 },
     average:   { key: 'average',   label: t.perf_average,   color: 'var(--amber)', bg: 'var(--lamber)', count: 0 },
     weak:      { key: 'weak',      label: t.perf_weak,      color: '#EF5350',      bg: '#FFEBEE',       count: 0 },
@@ -8573,8 +8562,7 @@ function renderEkipAnaliz() {
   };
   teamInspectors.forEach(ins => {
     const p = ins.performans || 0;
-    if (p >= 95) bantlar.excellent.count++;
-    else if (p >= 85) bantlar.good.count++;
+    if (p >= 85) bantlar.good.count++;
     else if (p >= 70) bantlar.average.count++;
     else if (p >= 50) bantlar.weak.count++;
     else bantlar.verypoor.count++;
