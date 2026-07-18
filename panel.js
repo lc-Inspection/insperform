@@ -10431,16 +10431,27 @@ function showKayipZamanSebepPopup() {
   popup.style.display = 'flex';
 }
 
-// ─── Tüm veriyi sil ───
+// ─── Tüm veriyi sil (şifre korumalı — kullanıcı talebiyle) ───
+// Şifre PHP tarafında (kv_get/hardcoded) doğrulanır — burada hiçbir şifre
+// saklanmaz veya karşılaştırılmaz, sadece kullanıcının girdiği değer olduğu
+// gibi sunucuya gönderilir.
 async function clearAllKayipZaman() {
+  const sifre = prompt('⚠️ Kayıp Zaman Analizi verilerini SİLMEK için şifreyi girin:');
+  if (sifre === null) return; // İptal edildi
+  if (!sifre.trim()) { alert('Şifre boş olamaz.'); return; }
   if (!confirm('⚠️ Tüm kayıp zaman verileri silinecek!\n\nBu işlem geri alınamaz. Devam etmek istiyor musunuz?')) return;
+
   const url = appConfig.sheetsWebAppUrl;
   const token = appConfig.sheetsApiToken;
   if (!url) { alert('Sheets bağlantısı yok.'); return; }
   const btn = document.getElementById('kz-clear-btn');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Siliniyor...'; }
   try {
-    await jsonpFetch(url, { action: 'clearKayipZaman', token });
+    const resp = await jsonpFetch(url, { action: 'clearKayipZaman', token, sifre });
+    if (!resp || resp.status !== 'ok') {
+      alert('❌ ' + (resp?.message || 'Şifre yanlış — veriler silinmedi.'));
+      return;
+    }
     kayipZamanData = [];
     _kzLastFetchTime = 0;
     saveKayipZamanToLocalStorage();
@@ -10450,7 +10461,7 @@ async function clearAllKayipZaman() {
   } catch(e) {
     alert('Hata: ' + e.message);
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = '🗑️ Tüm Veriyi Sil'; }
+    if (btn) { btn.disabled = false; btn.textContent = '🗑️ Temizle'; }
   }
 }
 
