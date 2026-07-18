@@ -590,7 +590,7 @@ function _bugununTarihiYerel() {
 let ikinciInspectionData = []; // { id, siparisKodu, inspector, ekipYoneticisi, talepNo, talepMiktari, sonuc, notAlani, tarih, degerlendiren, savedAt }
 // Teknik İnceleme hedefleri (admin tarafından ayarlanır) — varsayılan: günlük
 // 3 teknik değerlendirme, günlük 5 ikinci inspection.
-let teknikHedefler = { teknikDegerlendirmeGunluk: 3, ikinciInspectionGunluk: 5 };
+let teknikHedefler = { teknikDegerlendirmeGunluk: 3, ikinciInspectionGunluk: 5, baslangicTarihi: '' };
 
 // Kullanıcı yönetimi (Users sekmesi) için global cache — sayfa açılışında
 // renderDashboard() → renderTeamManagersSection() zinciri tarafından erken
@@ -9230,12 +9230,13 @@ async function temizleIkinciInspectionVerileri() {
 async function kaydetTeknikHedefler() {
   const teknikDegerlendirmeGunluk = Math.max(1, parseInt(document.getElementById('ti-hedef-degerlendirme')?.value, 10) || 3);
   const ikinciInspectionGunluk    = Math.max(1, parseInt(document.getElementById('ti-hedef-ikinci-inspection')?.value, 10) || 5);
+  const baslangicTarihi = document.getElementById('ti-hedef-baslangic-tarihi')?.value || '';
 
   const url = appConfig.sheetsWebAppUrl;
   const token = appConfig.sheetsApiToken;
   if (!url) { alert('⚠️ Sunucu bağlantısı yapılandırılmamış.'); return; }
 
-  teknikHedefler = { teknikDegerlendirmeGunluk, ikinciInspectionGunluk };
+  teknikHedefler = { teknikDegerlendirmeGunluk, ikinciInspectionGunluk, baslangicTarihi };
   try {
     await jsonpFetch(url, {
       action: 'setTeknikHedefler',
@@ -9299,7 +9300,8 @@ async function fetchTeknikHedefler() {
     if (data?.status === 'ok' && data.hedefler) {
       teknikHedefler = {
         teknikDegerlendirmeGunluk: Number(data.hedefler.teknikDegerlendirmeGunluk) || 3,
-        ikinciInspectionGunluk: Number(data.hedefler.ikinciInspectionGunluk) || 5
+        ikinciInspectionGunluk: Number(data.hedefler.ikinciInspectionGunluk) || 5,
+        baslangicTarihi: data.hedefler.baslangicTarihi || ''
       };
       try { localStorage.setItem('lc_teknik_hedefler_cache', JSON.stringify(teknikHedefler)); } catch(e) {}
     }
@@ -11942,12 +11944,17 @@ function renderTiDashboard() {
         .filter(Boolean)
     );
 
-    // İş takvimi aralığı: bu kullanıcının (her iki metrikten) EN ERKEN
-    // kaydından bugüne kadar. Hiç kaydı yoksa (teorik olarak imkansız, çünkü
-    // kullanıcı zaten bu listeye bir kayıttan dolayı girdi) 0 iş günü kabul edilir.
-    const tumTarihler = [...tdKayitlari.map(s=>s.tarih), ...iiKayitlari.map(r=>r.tarih)]
-      .filter(Boolean).sort();
-    const baslangicISO = tumTarihler.length ? tumTarihler[0] : null;
+    // İş takvimi aralığı: Admin tarafından ortak bir başlangıç günü
+    // belirlenmişse (teknikHedefler.baslangicTarihi) HERKES için o tarih
+    // kullanılır — kişinin kendi ilk kaydı değil. Admin bir tarih
+    // belirlemediyse (varsayılan/eski davranış), bu kullanıcının (her iki
+    // metrikten) EN ERKEN kaydı baz alınır.
+    let baslangicISO = teknikHedefler.baslangicTarihi || null;
+    if (!baslangicISO) {
+      const tumTarihler = [...tdKayitlari.map(s=>s.tarih), ...iiKayitlari.map(r=>r.tarih)]
+        .filter(Boolean).sort();
+      baslangicISO = tumTarihler.length ? tumTarihler[0] : null;
+    }
     const isGunuSayisi = _isGunuSayisiHesapla(baslangicISO, bugun, kayipGunSeti);
 
     const tdOrtalama = isGunuSayisi > 0 ? (tdKayitlari.length / isGunuSayisi) : null;
@@ -12009,6 +12016,9 @@ function renderTiDashboard() {
       </label>
       <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin:0">
         İkinci Inspection: <input type="number" id="ti-hedef-ikinci-inspection" min="1" value="${hedefII}" style="width:60px;padding:4px 6px;font-size:12px">
+      </label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin:0" title="Bu tarihten itibaren, tüm değerlendiriciler için ortak başlangıç günü olarak kullanılır — kişinin kendi ilk kaydı yerine bu tarih baz alınır.">
+        📅 Teknik Değ. Başlangıç Günü: <input type="date" id="ti-hedef-baslangic-tarihi" value="${teknikHedefler.baslangicTarihi || ''}" style="padding:4px 6px;font-size:12px">
       </label>
       <button class="btn btn-primary" onclick="kaydetTeknikHedefler()" style="padding:6px 14px;font-size:12px">💾 Hedefleri Kaydet</button>
       <span style="font-size:10.5px;color:var(--muted2);font-style:italic">Haftalık referans (6 iş günü): ${hedefTD*6} teknik değerlendirme · ${hedefII*6} ikinci inspection</span>
