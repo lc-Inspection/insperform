@@ -10859,13 +10859,11 @@ async function loadTeknikInceleme() {
   // Uzmanı) tarafından görülüp yönetilebiliyor, sadece admin değil.
   if (adminWrap) adminWrap.style.display = isAdmin ? '' : 'none';
 
-  // "Temizle" butonları (toplu silme) admin'e özel kalır — görüntüleme ve
-  // kayıt ekleme herkese açık olsa da, tüm kayıtları silme yetkisi sadece
+  // "Temizle" butonu (toplu silme, birleşik) admin'e özel kalır — görüntüleme
+  // ve kayıt ekleme herkese açık olsa da, tüm kayıtları silme yetkisi sadece
   // admin'de olmalı (kullanıcı talebiyle).
-  const tiClearBtn = document.getElementById('ti-clear-btn');
-  if (tiClearBtn) tiClearBtn.style.display = isAdmin ? '' : 'none';
-  const iiClearBtn = document.getElementById('ii-clear-btn');
-  if (iiClearBtn) iiClearBtn.style.display = isAdmin ? '' : 'none';
+  const tiClearAllBtn = document.getElementById('ti-clear-all-btn');
+  if (tiClearAllBtn) tiClearAllBtn.style.display = isAdmin ? '' : 'none';
 
   // Önbellekteki (localStorage) verilerle HEMEN çiz — ağ isteğini bekleme.
   renderTeknikKriterForm();
@@ -12060,28 +12058,48 @@ function renderTiDashboard() {
 }
 
 
-async function temizleTeknikIncelemeVerileri() {
+// ─── Teknik İnceleme + İkinci Inspection — Birleşik, Şifre Korumalı Temizleme
+// (kullanıcı talebiyle: eski 2 ayrı buton kaldırıldı, üstteki Yenile'nin
+// yanına TEK bir Temizle butonu eklendi). Şifre PHP'de (Tema3245) doğrulanır,
+// burada hiç saklanmaz — sadece kullanıcının girdiği değer sunucuya gönderilir.
+// Buton zaten sadece admin'e görünür (applyUserPermissions ile gizlenir),
+// ama şifre kontrolü ekstra bir güvenlik katmanı olarak burada da kalır.
+async function temizleTeknikVeIkinciInspectionVerileri() {
   if (!currentUser || !currentUser.isAdmin) { alert('⚠️ Bu işlem sadece admin tarafından yapılabilir.'); return; }
-  if (!confirm('⚠️ Tüm Teknik İnceleme değerlendirme kayıtları silinecek!\n\nBu işlem geri alınamaz. Devam etmek istiyor musunuz?')) return;
-  if (!confirm('Son kez soruyoruz: Teknik İnceleme verilerini kalıcı olarak silmek istediğinize emin misiniz?')) return;
+
+  const sifre = prompt('⚠️ İkinci Inspection VE Teknik İnceleme kayıtlarının TAMAMINI silmek için şifreyi girin:');
+  if (sifre === null) return; // İptal edildi
+  if (!sifre.trim()) { alert('Şifre boş olamaz.'); return; }
+  if (!confirm('⚠️ Hem İkinci Inspection hem Teknik İnceleme kayıtlarının TAMAMI silinecek!\n\nBu işlem geri alınamaz. Devam etmek istiyor musunuz?')) return;
 
   const url = appConfig.sheetsWebAppUrl;
   const token = appConfig.sheetsApiToken;
-  if (!url) { alert('Sheets bağlantısı yok.'); return; }
-  const btn = document.getElementById('ti-clear-btn');
+  if (!url) { alert('Sunucu bağlantısı yapılandırılmamış.'); return; }
+
+  const btn = document.getElementById('ti-clear-all-btn');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Siliniyor...'; }
   try {
-    const resp = await jsonpFetch(url, { action: 'clearTeknikIncelemeSkorlar', token });
-    if (!resp || resp.status !== 'ok') {
-      alert('❌ Sheets tarafında silme işlemi başarısız oldu: ' + (resp?.message || 'Bilinmeyen hata') + '\n\nYerel görünüm değiştirilmedi, lütfen tekrar deneyin.');
+    const respTi = await jsonpFetch(url, { action: 'clearTeknikIncelemeSkorlar', token, sifre });
+    if (!respTi || respTi.status !== 'ok') {
+      alert('❌ ' + (respTi?.message || 'Şifre yanlış — hiçbir veri silinmedi.'));
       return;
     }
+    const respIi = await jsonpFetch(url, { action: 'clearIkinciInspection', token, sifre });
+    if (!respIi || respIi.status !== 'ok') {
+      alert('⚠️ Teknik İnceleme kayıtları silindi, ancak İkinci Inspection silinirken hata oluştu: ' + (respIi?.message || 'bilinmeyen hata'));
+    }
+
     teknikSkorlar = [];
+    ikinciInspectionData = [];
     saveTeknikIncelemeToLocalStorage();
+    try { localStorage.setItem('lc_ikinci_inspection_cache', JSON.stringify(ikinciInspectionData)); } catch(e) {}
+
     renderTiSkorOzet();
     renderTiKayitlarTablo();
+    renderIkinciInspectionTablo();
+    renderTiDashboard();
     if (typeof renderDashboard === 'function' && document.getElementById('inspector-grid')) renderDashboard();
-    showSuccessMessage('✅ Teknik İnceleme verileri silindi!');
+    showSuccessMessage('✅ İkinci Inspection ve Teknik İnceleme kayıtları silindi!');
   } catch(e) {
     alert('Hata: ' + e.message);
   } finally {
